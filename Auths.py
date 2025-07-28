@@ -1,6 +1,9 @@
-import os
+import os, pickle
 from abc import ABC, abstractmethod
 from flask.cli import load_dotenv
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
 
 load_dotenv()
 
@@ -39,22 +42,28 @@ class SpotifyAuth(AuthBase):
                 "scope": self.scope,
             }
             auth_url = "https://accounts.spotify.com/authorize?" + urlencode(params)
-            return auth_url
-        else:
-            import requests
-            token_url = "https://accounts.spotify.com/api/token"
-            data = {
-                "grant_type": "authorization_code",
-                "code": code,
-                "redirect_uri": self.redirect_uri,
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-            }
-            response = requests.post(token_url, data=data)
-            response.raise_for_status()
-            token_info = response.json()
-            self.access_token = token_info['access_token']
-            return self.access_token
+            print("\n Please login to Spotify using this link")
+            print(auth_url)
+
+            redirected_url = input("\n Paste the full redirect URL here after logging in:")
+            from urllib.parse import urlparse, parse_qs
+            code = parse_qs(urlparse(redirected_url).query)["code"][0]
+
+
+        import requests
+        token_url = "https://accounts.spotify.com/api/token"
+        data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": self.redirect_uri,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+        }
+        response = requests.post(token_url, data=data)
+        response.raise_for_status()
+        token_info = response.json()
+        self.access_token = token_info['access_token']
+        return self.access_token
 
     def get_credentials(self):
         return self.client_id, self.client_secret, self.access_token
@@ -62,16 +71,30 @@ class SpotifyAuth(AuthBase):
 class YouTubeAuth(AuthBase):
     def __init__(self):
         super().__init__()
-        self.api_key = os.getenv("youtube_api_key")
+        self.scopes = ["https://www.googleapis.com/auth/youtube"]
+        self.credentials = None
+        self.client_secrets_file = "client_secret_909881405963-63fqqgdhk1hflis5kaktraqs3c513j47.apps.googleusercontent.com.json"
+        self.token_file = "youtube_token.pickle"
 
-    def authenticate(self, **kwargs):
-        if not self.api_key:
-            raise ValueError("YouTube API key is missing")
-        self.access_token = self.api_key
+    def authenticate(self):
+        if os.path.exists(self.token_file):
+            with open(self.token_file, "rb") as token:
+                self.credentials = pickle.load(token)
+
+        if not self.credentials or not self.credentials.valid:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                self.client_secrets_file,
+                scopes = self.scopes
+            )
+            self.credentials = flow.run_local_server(port=8080)
+            with open(self.token_file, "wb") as token:
+                pickle.dump(self.credentials, token)
+
+        self.access_token = self.credentials.token
         return self.access_token
 
     def get_credentials(self):
-        return self.api_key, self.access_token
+        return self.credentials
 
 class LastFMAuth(AuthBase):
     def __init__(self):

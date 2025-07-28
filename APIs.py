@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 import spotipy
 import requests
+from googleapiclient.discovery import build
 
 # Import Files
 from Auths import SpotifyAuth, YouTubeAuth, LastFMAuth
@@ -22,7 +23,7 @@ class SpotifyAPI(APIBase):
     def __init__(self):
         super().__init__("Spotify")
         self.SpotifyAuth = SpotifyAuth()
-        self.scope = "user-read-private user-library-read user-top-read playlist-modify-public playlist-modify-private"
+        self.SpotifyAuth.authenticate()
         self.client_id, self.client_secret, self.access_token = self.SpotifyAuth.get_credentials()
         self.spotify = spotipy.Spotify(auth=self.access_token)
         self.user_id = self.spotify.current_user()['id']
@@ -52,7 +53,9 @@ class YoutubeAPI(APIBase):
     def __init__(self):
         super().__init__("Youtube")
         self.YoutubeAuth = YouTubeAuth()
-        self.youtube = self.YoutubeAuth.get_credentials()
+        self.YoutubeAuth.authenticate()
+        credentials = self.YoutubeAuth.get_credentials()
+        self.youtube = build('youtube', 'v3', credentials=credentials)
         self.video_id = None
 
     def set_video(self, video_id):
@@ -66,7 +69,6 @@ class YoutubeAPI(APIBase):
             part="snippet",
             body={
                 "snippet": {
-                    "title": playlist_name,
                     "playlistId": playlist_id,
                     "resourceId": {
                         "kind": "youtube#video",
@@ -80,7 +82,16 @@ class YoutubeAPI(APIBase):
         return response
 
     def get_user_info(self):
-        return "[WARNING] Youtube user info retrieval not implemented."
+        channels_response = self.youtube.channels().list(
+            part="snippet,contentDetails,statistics",
+            mine=True
+        ).execute()
+
+        if channels_response['items']:
+            user_info = channels_response['items'][0]["snippet"]
+            return user_info.get("title", "Unknown YouTube User"), user_info
+        else:
+            return "Unknown YouTuvbe", {}
 
 class LastFMAPI():
     def __init__(self):
