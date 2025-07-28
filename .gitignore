@@ -1,1 +1,3 @@
-youtube_token.pickle/ 
+youtube_token.pickle/
+client_secret.json
+.env

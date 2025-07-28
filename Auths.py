@@ -73,7 +73,7 @@ class YouTubeAuth(AuthBase):
         super().__init__()
         self.scopes = ["https://www.googleapis.com/auth/youtube"]
         self.credentials = None
-        self.client_secrets_file = "client_secret_909881405963-63fqqgdhk1hflis5kaktraqs3c513j47.apps.googleusercontent.com.json"
+        self.client_secret_file = "client_secret.json"
         self.token_file = "youtube_token.pickle"
 
     def authenticate(self):
@@ -82,8 +82,8 @@ class YouTubeAuth(AuthBase):
                 self.credentials = pickle.load(token)
 
         if not self.credentials or not self.credentials.valid:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                self.client_secrets_file,
+            flow = InstalledAppFlow.from_client_secret_file(
+                self.client_secret_file,
                 scopes = self.scopes
             )
             self.credentials = flow.run_local_server(port=8080)
