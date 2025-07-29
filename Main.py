@@ -1,6 +1,14 @@
 # Import files
-from APIs import SpotifyAPI, YoutubeAPI
+from APIs import SpotifyAPI, YoutubeAPI, LastFMAPI
+from Recommendations import GenreRecs, UserRecs, SeasonRecs, WeatherRecs
 def main():
+    def object_inst():
+        genre = GenreRecs()
+        user = UserRecs()
+        season = SeasonRecs()
+        weather = WeatherRecs()
+        return genre, user, season, weather
+
     def test_spotify_auth():
         try:
             print("[DEBUG] Testing Spotify authentication...")
@@ -19,23 +27,25 @@ def main():
         except Exception as e:
             print(f"[DEBUG] YouTube Auth Failed: {e}")
 
-    def recommendations():
+    def recommendations(genre, user, season, weather):
         rec_choice = input("What type of recommendations? (Genre / User / Album / Seasonal / Weather)")
         if rec_choice.lower().startswith("g"):
-            pass
+            genre.generate_recs()
         elif rec_choice.lower().startswith("u"):
-            pass
+            user.generate_recs()
         elif rec_choice.lower().startswith("a"):
             pass
         elif rec_choice.lower().startswith("s"):
-            pass
+            season.generate_recs()
         elif rec_choice.lower().startswith("w"):
-            pass
+            weather.generate_recs()
         else:
             print("[DEBUG] Invalid recommendation input. ")
 
+    genre, user, season, weather = object_inst()
     test_spotify_auth()
     test_youtube_auth()
+    recommendations(genre, user, season, weather)
 
 
 

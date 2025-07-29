@@ -89,7 +89,7 @@ class GenreRecs(BaseRecs):
     def generate_recs(self):
         genre = input("Enter a genre: ")
         limit = 10
-        return self.rec_algorithm(genre, limit)`
+        return self.rec_algorithm(genre, limit)
 
 class UserRecs(BaseRecs):
     def __init__(self):
