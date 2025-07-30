@@ -1,12 +1,18 @@
 # Import files
 from APIs import SpotifyAPI, YoutubeAPI, LastFMAPI
 from Recommendations import GenreRecs, UserRecs, SeasonRecs, WeatherRecs
+from Auths import LastFMAuth
 def main():
     def object_inst():
-        genre = GenreRecs()
-        user = UserRecs()
-        season = SeasonRecs()
-        weather = WeatherRecs()
+        # Auth objects
+        lastfm = LastFMAuth()
+        lastfm_key = lastfm.get_credentials()
+
+        # Recommendation Objects
+        genre = GenreRecs(lastfm_key)
+        user = UserRecs(None)
+        season = SeasonRecs(None)
+        weather = WeatherRecs(None)
         return genre, user, season, weather
 
     def test_spotify_auth():

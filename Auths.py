@@ -82,7 +82,7 @@ class YouTubeAuth(AuthBase):
                 self.credentials = pickle.load(token)
 
         if not self.credentials or not self.credentials.valid:
-            flow = InstalledAppFlow.from_client_secret_file(
+            flow = InstalledAppFlow.from_client_secrets_file(
                 self.client_secret_file,
                 scopes = self.scopes
             )

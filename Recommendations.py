@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import random
-from google.auth.transport import requests
+import requests
 
 class BaseRecs(ABC):
     def __init__(self, api_key1):
@@ -64,8 +64,9 @@ class GenreRecs(BaseRecs):
                 print(f"[ERROR] Exception while getting top tracks for genre: {e}")
                 return []
 
-        genres_to_use = [genre] + get_similar_genre(genre)[:2]
-        print(f"[DEBUG] Genres to fetch tracks from: {genres_to_use}")
+        similar_genres = get_similar_genre()
+        genres_to_use = [genre] + similar_genres[:2]
+        print(f"[DEBUG] Genres: {genres_to_use}")
 
         all_tracks = []
         seen_titles = set()
@@ -88,28 +89,62 @@ class GenreRecs(BaseRecs):
 
     def generate_recs(self):
         genre = input("Enter a genre: ")
-        limit = 10
+        limit = int(input("Enter number of recommended tracks (less than 50): "))
+        print(f"[DEBUG] {limit} {genre} songs")
         return self.rec_algorithm(genre, limit)
 
+    def link_youtube_spotify(self):
+        pass
+
+    def upload_recs(self):
+        pass
+
 class UserRecs(BaseRecs):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, api_key1):
+        super().__init__(api_key1)
 
     def rec_algorithm(self, param1, param2):
+        pass
+
+    def generate_recs(self):
+        pass
+
+    def link_youtube_spotify(self):
+        pass
+
+    def upload_recs(self):
         pass
 
 class SeasonRecs(BaseRecs):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, api_key1):
+        super().__init__(api_key1)
 
     def rec_algorithm(self, param1, param2):
         pass
 
+    def generate_recs(self):
+        pass
+
+    def link_youtube_spotify(self):
+        pass
+
+    def upload_recs(self):
+        pass
+
 class WeatherRecs(BaseRecs):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, api_key1):
+        super().__init__(api_key1)
 
     def rec_algorithm(self, param1, param2):
+        pass
+
+    def generate_recs(self):
+        pass
+
+    def link_youtube_spotify(self):
+        pass
+
+    def upload_recs(self):
         pass
 
 
