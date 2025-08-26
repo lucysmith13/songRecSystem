@@ -1,18 +1,31 @@
+# Import Libraries
+from spotipy import SpotifyOAuth
+
 # Import files
 from APIs import SpotifyAPI, YoutubeAPI, LastFMAPI
 from Recommendations import GenreRecs, UserRecs, SeasonRecs, WeatherRecs
-from Auths import LastFMAuth
+from Auths import LastFMAuth, SpotifyAuth
 def main():
     def object_inst():
         # Auth objects
         lastfm = LastFMAuth()
         lastfm_key = lastfm.get_credentials()
 
+        spotify = SpotifyAuth()
+        id, secret, token, scope = spotify.get_credentials()
+        sp = SpotifyOAuth(
+            client_id = id,
+            client_secret = secret,
+            redirect_uri = 'http://127.0.0.1:8080/callback',
+            scope = scope
+        )
+
+
         # Recommendation Objects
-        genre = GenreRecs(lastfm_key)
-        user = UserRecs(None)
-        season = SeasonRecs(None)
-        weather = WeatherRecs(None)
+        genre = GenreRecs(lastfm_key, None)
+        user = UserRecs(None, None)
+        season = SeasonRecs(lastfm_key, sp)
+        weather = WeatherRecs(None, None)
         return genre, user, season, weather
 
     def test_spotify_auth():
@@ -47,6 +60,10 @@ def main():
             weather.generate_recs()
         else:
             print("[DEBUG] Invalid recommendation input. ")
+
+        if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):
+            # Run add to playlist function
+            pass
 
     genre, user, season, weather = object_inst()
     test_spotify_auth()

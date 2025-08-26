@@ -4,7 +4,6 @@ from flask.cli import load_dotenv
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-
 load_dotenv()
 
 class AuthBase(ABC):
@@ -66,7 +65,7 @@ class SpotifyAuth(AuthBase):
         return self.access_token
 
     def get_credentials(self):
-        return self.client_id, self.client_secret, self.access_token
+        return self.client_id, self.client_secret, self.access_token, self.scope
 
 class YouTubeAuth(AuthBase):
     def __init__(self):
