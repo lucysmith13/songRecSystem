@@ -198,15 +198,17 @@ class SeasonRecs(BaseRecs):
                 uris.append(uri)
 
         playlist_name = f"{random_genre} songs on a {descrip} {tod}"
+        print(playlist_name)
 
         print(playlist_name)
         for track in recommendations:
-            print(track)
+            print(" -", track)
 
         return recommendations, uris, playlist_name
 
     def generate_recs(self):
-        return self.rec_algorithm(None, None)
+        recs, uris, playlist_name = self.rec_algorithm(None, None)
+        return recs, uris, playlist_name
         
 
     def link_youtube_spotify(self):

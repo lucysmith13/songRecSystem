@@ -20,13 +20,17 @@ def main():
             scope = scope
         )
 
-
         # Recommendation Objects
         genre = GenreRecs(lastfm_key, None)
         user = UserRecs(None, None)
         season = SeasonRecs(lastfm_key, sp)
         weather = WeatherRecs(None, None)
-        return genre, user, season, weather
+
+        # API instantiation
+        spotifyAPI = SpotifyAPI()
+        youtubeAPI = YoutubeAPI()
+
+        return genre, user, season, weather, spotifyAPI, youtubeAPI
 
     def test_spotify_auth():
         try:
@@ -46,7 +50,7 @@ def main():
         except Exception as e:
             print(f"[DEBUG] YouTube Auth Failed: {e}")
 
-    def recommendations(genre, user, season, weather):
+    def recommendations(genre, user, season, weather, spotifyAPI, youtubeAPI):
         rec_choice = input("What type of recommendations? (Genre / User / Album / Seasonal / Weather)")
         if rec_choice.lower().startswith("g"):
             genre.generate_recs()
@@ -63,12 +67,13 @@ def main():
 
         if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):
             # Run add to playlist function
-            pass
+            spotifyAPI.add_to_playlist()
+            youtubeAPI.add_to_playlist()
 
-    genre, user, season, weather = object_inst()
+    genre, user, season, weather, spotifyapi, youtubeapi = object_inst()
     test_spotify_auth()
     test_youtube_auth()
-    recommendations(genre, user, season, weather)
+    recommendations(genre, user, season, weather, spotifyapi, youtubeapi)
 
 
 
