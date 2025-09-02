@@ -1,5 +1,6 @@
 # Import Libraries
 from spotipy import SpotifyOAuth
+import spotipy
 
 # Import files
 from APIs import SpotifyAPI, YoutubeAPI, LastFMAPI
@@ -11,20 +12,15 @@ def main():
         lastfm = LastFMAuth()
         lastfm_key = lastfm.get_credentials()
 
-        spotify = SpotifyAuth()
-        id, secret, token, scope = spotify.get_credentials()
-        sp = SpotifyOAuth(
-            client_id = id,
-            client_secret = secret,
-            redirect_uri = 'http://127.0.0.1:8080/callback',
-            scope = scope
-        )
+        spotify_auth = SpotifyAuth()
+        access_token = spotify_auth.get_access_token()
+        sp = spotipy.Spotify(auth=access_token)
 
         # Recommendation Objects
-        genre = GenreRecs(lastfm_key, None)
-        user = UserRecs(None, None)
-        season = SeasonRecs(lastfm_key, sp)
-        weather = WeatherRecs(None, None)
+        genre = GenreRecs(lastfm_key, spotify_auth)
+        user = UserRecs(None, spotify_auth)
+        season = SeasonRecs(lastfm_key, spotify_auth)
+        weather = WeatherRecs(None, spotify_auth)
 
         # API instantiation
         spotifyAPI = SpotifyAPI()
@@ -68,7 +64,7 @@ def main():
         if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):
             # Run add to playlist function
             spotifyAPI.add_to_playlist()
-            youtubeAPI.add_to_playlist()
+            #youtubeAPI.add_to_playlist()
 
     genre, user, season, weather, spotifyapi, youtubeapi = object_inst()
     test_spotify_auth()

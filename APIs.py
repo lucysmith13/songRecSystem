@@ -12,7 +12,7 @@ class APIBase(ABC):
         self.name = name
 
     @abstractmethod
-    def add_to_playlist(self, playlist_name,playlist_id, track_uris):
+    def add_to_playlist(self, playlist_name,track_uris):
         pass
 
     @abstractmethod
@@ -23,14 +23,28 @@ class SpotifyAPI(APIBase):
     def __init__(self):
         super().__init__("Spotify")
         self.SpotifyAuth = SpotifyAuth()
-        self.SpotifyAuth.authenticate()
-        self.client_id, self.client_secret, self.access_token = self.SpotifyAuth.get_credentials()
-        self.spotify = spotipy.Spotify(auth=self.access_token)
-        self.user_id = self.spotify.current_user()['id']
 
-    def add_to_playlist(self, playlist_name, playlist_id, track_uris):
+        self.access_token = self.SpotifyAuth.get_access_token()
+        self.spotify = spotipy.Spotify(auth=self.access_token)
+
+        try:
+            self.user_id = self.spotify.current_user()['id']
+        except spotipy.exceptions.SpotifyException:
+            print("[DEBUG] Token was expired. Refreshing now...")
+            self.access_token = self.SpotifyAuth.get_access_token()
+            self.spotify = spotipy.Spotify(auth=self.access_token)
+            self.user_id = self.spotify.current_user()['id']
+
+
+    def refresh_spotify(self):
+        self.access_token = self.SpotifyAuth.get_access_token()
+        self.spotify = spotipy.Spotify(auth=self.access_token)
+
+    def add_to_playlist(self, playlist_name, track_uris):
         if not track_uris:
             raise ValueError("trac")
+
+        self.refresh_spotify()
 
         playlist = self.spotify.user_playlist_create(
             user = self.user_id,
@@ -39,15 +53,17 @@ class SpotifyAPI(APIBase):
             description = "Created by Lucy's song recommendation system."
         )
 
-        self.spotify.playlist_add_items(playlist_id, track_uris)
+        self.spotify.playlist_add_items(playlist["id"], track_uris)
         return playlist
 
     def get_user_info(self):
+        self.refresh_spotify()
         user_id = self.spotify.current_user()['id']
         user_info = self.spotify.me()
         user_name = user_info.get('display_name', 'Unknown User')
 
         return user_id, user_info, user_name
+
 
 class YoutubeAPI(APIBase):
     def __init__(self):

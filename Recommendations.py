@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import random, requests
 import datetime as dt
 from datetime import datetime, time
+import spotipy
+from Auths import SpotifyAuth, YouTubeAuth, LastFMAuth
 
 class BaseRecs(ABC):
     def __init__(self, api_key1, credentials):
@@ -25,10 +27,12 @@ class BaseRecs(ABC):
         pass
 
 class GenreRecs(BaseRecs):
-    def __init__(self, api_key1, credentials):
+    def __init__(self, api_key1, spotify_auth: SpotifyAuth):
         super().__init__(api_key1, credentials=None)
         self.lastfm_api_key = api_key1
 
+        access_token = spotify_auth.get_access_token()
+        self.sp = spotipy.Spotify(auth=access_token)
 
     def rec_algorithm(self, genre, limit):
         def get_similar_genre():
@@ -72,6 +76,7 @@ class GenreRecs(BaseRecs):
 
         all_tracks = []
         seen_titles = set()
+        uris = []
 
         for tag in genres_to_use:
             tracks = get_top_tracks_for_genre(tag)
@@ -82,18 +87,34 @@ class GenreRecs(BaseRecs):
                 if combined not in seen_titles:
                     seen_titles.add(combined)
                     all_tracks.append(combined)
+
+                    try:
+                        query = f"track:{track_name} artist:{artist_name}"
+                        results = self.sp.search(q=query, type='track', limit=1)
+                        items = results.get('track', {}).get('items', [])
+                        if items:
+                            uris.append(items[0].get('uri'))
+                    except Exception as e:
+                        print(f"[ERROR] Couldn't fetch URI for {combined}: {e}")
+
                 if len(all_tracks) >= limit:
                     break
 
+        playlist_name = f"{genre} songs"
+
         self.recommended_tracks = all_tracks
         print(f"[DEBUG] Recommended tracks: {self.recommended_tracks}")
-        return self.recommended_tracks
+
+
+        return self.recommended_tracks, uris, playlist_name
 
     def generate_recs(self):
         genre = input("Enter a genre: ")
         limit = int(input("Enter number of recommended tracks (less than 50): "))
         print(f"[DEBUG] {limit} {genre} songs")
-        return self.rec_algorithm(genre, limit)
+
+        recs, uris, playlist_name = self.rec_algorithm(genre, limit)
+        return recs, uris, playlist_name
 
     def link_youtube_spotify(self):
         pass
@@ -102,8 +123,12 @@ class GenreRecs(BaseRecs):
         pass
 
 class UserRecs(BaseRecs):
-    def __init__(self, api_key1, credentials):
+    def __init__(self, api_key1, spotify_auth: SpotifyAuth):
         super().__init__(api_key1, credentials=None)
+        self.lastfm_api_key = api_key1
+
+        access_token = spotify_auth.get_access_token()
+        self.sp = spotipy.Spotify(auth=access_token)
 
     def rec_algorithm(self, param1, param2):
         pass
@@ -118,10 +143,12 @@ class UserRecs(BaseRecs):
         pass
 
 class SeasonRecs(BaseRecs):
-    def __init__(self, api_key1, credentials):
-        super().__init__(api_key1, credentials)
+    def __init__(self, api_key1, spotify_auth: SpotifyAuth):
+        super().__init__(api_key1, credentials=None)
         self.lastfm_api_key = api_key1
-        self.credentials = credentials
+
+        access_token = spotify_auth.get_access_token()
+        self.sp = spotipy.Spotify(auth=access_token)
 
     def rec_algorithm(self, param1, param2):
         hour = dt.datetime.now().hour

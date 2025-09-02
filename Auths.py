@@ -4,6 +4,7 @@ from flask.cli import load_dotenv
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+
 load_dotenv()
 
 class AuthBase(ABC):
@@ -25,11 +26,24 @@ class SpotifyAuth(AuthBase):
         self.client_secret = os.getenv("spotify_client_secret")
         self.redirect_uri = os.getenv("redirect_uri")
 
-        self.scope = "user-read-private user-library-read user-top-read playlist-modify-public playlist-modify-private"
+        self.scope = ("user-read-private user-library-read user-top-read"
+                      " playlist-modify-public playlist-modify-private")
+
+        self.token_file = "spotify_token.pickle"
+        self.access_token = None
+        self.refresh_token = None
 
     def authenticate(self, code=None):
-        if not self.client_id or not self.client_secret or not self.redirect_uri:
-            raise ValueError("Spotify credentials are missing")
+        if os.path.exists(self.token_file):
+            with open(self.token_file, "rb") as f:
+                token_info = pickle.load(f)
+
+            if not self._is_token_expired(token_info):
+                self.access_token = token_info["access_token"]
+                self.refresh_token = token_info.get("refresh_token")
+                return self.access_token
+            else:
+                return self._refresh_access_token(token_info["refresh_token"])
 
         if code is None:
             from urllib.parse import urlencode
@@ -48,24 +62,79 @@ class SpotifyAuth(AuthBase):
             from urllib.parse import urlparse, parse_qs
             code = parse_qs(urlparse(redirected_url).query)["code"][0]
 
+            token_url = "https://accounts.spotify.com/api/token"
+            data = {
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": self.redirect_uri,
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+            }
 
-        import requests
+            import requests, time
+            response = requests.post(token_url, data=data)
+            response.raise_for_status()
+            token_info = response.json()
+
+            token_info["expires_at"] = int(time.time()) + token_info.get("expires_in", 3600)
+
+            self.access_token = token_info["access_token"]
+            self.refresh_token = token_info.get("refresh_token")
+
+            with open(self.token_file, "wb") as f:
+                pickle.dump(token_info, f)
+
+            return self.access_token
+
+    def _refresh_access_token(self, refresh_token):
         token_url = "https://accounts.spotify.com/api/token"
         data = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": self.redirect_uri,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
             "client_id": self.client_id,
             "client_secret": self.client_secret,
         }
+        import requests, time
         response = requests.post(token_url, data=data)
         response.raise_for_status()
         token_info = response.json()
-        self.access_token = token_info['access_token']
+
+        token_info["expires_at"] = int(time.time()) + token_info.get("expires_in", 3600)
+
+        if "refresh_token" not in token_info:
+            token_info["refresh_token"] = refresh_token
+
+        self.access_token = token_info["access_token"]
+        self.refresh_token = token_info.get("refresh_token", refresh_token)
+
+        with open(self.token_file, "wb") as f:
+            pickle.dump(token_info, f)
+
         return self.access_token
+
+    def _is_token_expired(self, token_info):
+        import time
+        expires_at = token_info.get("expires_at")
+        if not expires_at:
+            expires_in = token_info.get("expires_in", 3600)
+            expires_at = int(time.time()) + expires_in
+            token_info["expires_at"] = expires_at
+        return time.time() > expires_at
 
     def get_credentials(self):
         return self.client_id, self.client_secret, self.access_token, self.scope
+
+    def get_access_token(self):
+        if os.path.exists(self.token_file):
+            with open(self.token_file, "rb") as f:
+                token_info = pickle.load(f)
+
+            if self._is_token_expired(token_info):
+                return self._refresh_access_token(token_info["refresh_token"])
+            else:
+                return token_info["access_token"]
+
+        return self.authenticate()
 
 class YouTubeAuth(AuthBase):
     def __init__(self):
