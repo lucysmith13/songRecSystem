@@ -42,7 +42,7 @@ class SpotifyAPI(APIBase):
 
     def add_to_playlist(self, playlist_name, track_uris):
         if not track_uris:
-            raise ValueError("trac")
+            raise ValueError("track uris missing.")
 
         self.refresh_spotify()
 
@@ -53,7 +53,11 @@ class SpotifyAPI(APIBase):
             description = "Created by Lucy's song recommendation system."
         )
 
+        playlist_url = playlist["external_urls"]["spotify"]
+
         self.spotify.playlist_add_items(playlist["id"], track_uris)
+        print(f"[DEBUG] Playlist created: {playlist_name}")
+        print(f"[DEBUG] Spotify playlist URL: {playlist_url}")
         return playlist
 
     def get_user_info(self):
@@ -81,21 +85,52 @@ class YoutubeAPI(APIBase):
         if not self.video_id:
             raise ValueError("No video selected, make sure to use set_video first.")
 
-        request = self.youtube.playlistItems().insert(
-            part="snippet",
-            body={
-                "snippet": {
-                    "playlistId": playlist_id,
-                    "resourceId": {
-                        "kind": "youtube#video",
-                        "videoId": self.video_id,
+        playlists = self.youtube.playlists().list(
+            part='snippet,contentDetails',
+            mine=True,
+            maxResults=50,
+        ).execute()
+
+        playlist_id = None
+        for playlist in playlists.get("items", []):
+            if playlist["snippet"]["title"].lower() == playlist_name.lower():
+                playlist_id = playlist["id"]
+                break
+
+        if not playlist_id:
+            new_playlist = self.youtube.playlists().insert(
+                part='snippet,status',
+                body={
+                    "snippet": {
+                        "title": playlist_name,
+                        "description": "Created by Lucy's song recommendation system.",
+                    },
+                    "status": {
+                        "privacyStatus": "private",
                     }
                 }
-            }
-        )
+            ).execute()
+            playlist_id = new_playlist["id"]
 
-        response = request.execute()
-        return response
+            request = self.youtube.playlistItems.insert(
+                part="snippet",
+                body={
+                    "snippet": {
+                        "playlistId": playlist_id,
+                        "resourceId": {
+                            "kind": "youtube#video",
+                            "videoId": self.video_id,
+                        }
+                    }
+                }
+            )
+
+            response = request.execute()
+            return {
+                "playlist_id": playlist_id,
+                "playlist_url": f"https://www.youtube.com/playlist?list={playlist_id}",
+                "response": response,
+            }
 
     def get_user_info(self):
         channels_response = self.youtube.channels().list(
@@ -107,7 +142,7 @@ class YoutubeAPI(APIBase):
             user_info = channels_response['items'][0]["snippet"]
             return user_info.get("title", "Unknown YouTube User"), user_info
         else:
-            return "Unknown YouTuvbe", {}
+            return "Unknown YouTube", {}
 
 class LastFMAPI():
     def __init__(self):

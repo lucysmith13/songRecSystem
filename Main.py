@@ -49,7 +49,7 @@ def main():
     def recommendations(genre, user, season, weather, spotifyAPI, youtubeAPI):
         rec_choice = input("What type of recommendations? (Genre / User / Album / Seasonal / Weather)")
         if rec_choice.lower().startswith("g"):
-            genre.generate_recs()
+            recs, uris, playlist_name  = genre.generate_recs()
         elif rec_choice.lower().startswith("u"):
             user.generate_recs()
         elif rec_choice.lower().startswith("a"):
@@ -62,9 +62,18 @@ def main():
             print("[DEBUG] Invalid recommendation input. ")
 
         if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):
-            # Run add to playlist function
-            spotifyAPI.add_to_playlist()
-            #youtubeAPI.add_to_playlist()
+            APIChoice = input("Youtube or Spotify or Both?")
+            if APIChoice.lower().startswith("y"):
+                youtubeAPI.add_to_playlist()
+            elif APIChoice.lower().startswith("s"):
+                if uris:
+                    print("URIs to add:", uris)
+                    spotifyAPI.add_to_playlist(playlist_name, uris)
+                else:
+                    print("[ERROR] No songs to add. ")
+            else:
+                spotifyAPI.add_to_playlist(playlist_name, uris)
+                youtubeAPI.add_to_playlist()
 
     genre, user, season, weather, spotifyapi, youtubeapi = object_inst()
     test_spotify_auth()

@@ -91,7 +91,7 @@ class GenreRecs(BaseRecs):
                     try:
                         query = f"track:{track_name} artist:{artist_name}"
                         results = self.sp.search(q=query, type='track', limit=1)
-                        items = results.get('track', {}).get('items', [])
+                        items = results.get('tracks', {}).get('items', [])
                         if items:
                             uris.append(items[0].get('uri'))
                     except Exception as e:

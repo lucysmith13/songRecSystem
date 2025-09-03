@@ -130,7 +130,11 @@ class SpotifyAuth(AuthBase):
                 token_info = pickle.load(f)
 
             if self._is_token_expired(token_info):
-                return self._refresh_access_token(token_info["refresh_token"])
+                refresh_token = token_info.get("refresh_token")
+                if not refresh_token:
+                    print("No refresh token found. Re-authentication required.")
+                    return self.authenticate()
+                return self._refresh_access_token(refresh_token)
             else:
                 return token_info["access_token"]
 
