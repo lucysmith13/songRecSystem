@@ -5,22 +5,25 @@ import spotipy
 # Import files
 from APIs import SpotifyAPI, YoutubeAPI, LastFMAPI
 from Recommendations import GenreRecs, UserRecs, SeasonRecs, WeatherRecs
-from Auths import LastFMAuth, SpotifyAuth
+from Auths import LastFMAuth, SpotifyAuth, WeatherAPI
 def main():
     def object_inst():
         # Auth objects
         lastfm = LastFMAuth()
         lastfm_key = lastfm.get_credentials()
 
+        open_weather = WeatherAPI()
+        open_weather_key = open_weather.get_credentials()
+
         spotify_auth = SpotifyAuth()
         access_token = spotify_auth.get_access_token()
         sp = spotipy.Spotify(auth=access_token)
 
         # Recommendation Objects
-        genre = GenreRecs(lastfm_key, spotify_auth)
-        user = UserRecs(None, spotify_auth)
-        season = SeasonRecs(lastfm_key, spotify_auth)
-        weather = WeatherRecs(None, spotify_auth)
+        genre = GenreRecs(lastfm_key, None, spotify_auth)
+        user = UserRecs(None, None, spotify_auth)
+        season = SeasonRecs(lastfm_key, None, spotify_auth)
+        weather = WeatherRecs(open_weather_key, lastfm_key, spotify_auth)
 
         # API instantiation
         spotifyAPI = SpotifyAPI()
@@ -55,16 +58,17 @@ def main():
         elif rec_choice.lower().startswith("a"):
             pass
         elif rec_choice.lower().startswith("s"):
-            season.generate_recs()
+            recs, uris, playlist_name = season.generate_recs()
         elif rec_choice.lower().startswith("w"):
-            weather.generate_recs()
+            recs, uris, playlist_name = weather.generate_recs()
         else:
             print("[DEBUG] Invalid recommendation input. ")
 
         if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):
             APIChoice = input("Youtube or Spotify or Both?")
+            video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
             if APIChoice.lower().startswith("y"):
-                youtubeAPI.add_to_playlist()
+                youtubeAPI.add_to_playlist(playlist_name, video_ids)
             elif APIChoice.lower().startswith("s"):
                 if uris:
                     print("URIs to add:", uris)
@@ -73,7 +77,7 @@ def main():
                     print("[ERROR] No songs to add. ")
             else:
                 spotifyAPI.add_to_playlist(playlist_name, uris)
-                youtubeAPI.add_to_playlist()
+                youtubeAPI.add_to_playlist(playlist_name, video_ids)
 
     genre, user, season, weather, spotifyapi, youtubeapi = object_inst()
     test_spotify_auth()

@@ -6,8 +6,9 @@ import spotipy
 from Auths import SpotifyAuth, YouTubeAuth, LastFMAuth
 
 class BaseRecs(ABC):
-    def __init__(self, api_key1, credentials):
+    def __init__(self, api_key1, api_key2, credentials):
         self.api_key1 = api_key1
+        self.api_key2 = api_key2
         self.credentials = credentials
 
     @abstractmethod
@@ -27,9 +28,10 @@ class BaseRecs(ABC):
         pass
 
 class GenreRecs(BaseRecs):
-    def __init__(self, api_key1, spotify_auth: SpotifyAuth):
-        super().__init__(api_key1, credentials=None)
+    def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
+        super().__init__(api_key1, api_key2=None, credentials=None)
         self.lastfm_api_key = api_key1
+
 
         access_token = spotify_auth.get_access_token()
         self.sp = spotipy.Spotify(auth=access_token)
@@ -123,8 +125,8 @@ class GenreRecs(BaseRecs):
         pass
 
 class UserRecs(BaseRecs):
-    def __init__(self, api_key1, spotify_auth: SpotifyAuth):
-        super().__init__(api_key1, credentials=None)
+    def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
+        super().__init__(api_key1, api_key2=None, credentials=None)
         self.lastfm_api_key = api_key1
 
         access_token = spotify_auth.get_access_token()
@@ -143,8 +145,8 @@ class UserRecs(BaseRecs):
         pass
 
 class SeasonRecs(BaseRecs):
-    def __init__(self, api_key1, spotify_auth: SpotifyAuth):
-        super().__init__(api_key1, credentials=None)
+    def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
+        super().__init__(api_key1, api_key2=None, credentials=None)
         self.lastfm_api_key = api_key1
 
         access_token = spotify_auth.get_access_token()
@@ -218,7 +220,7 @@ class SeasonRecs(BaseRecs):
             query = f"{name} {artist}"
 
             result = self.sp.search(q=query, type='track', limit=30)
-            print(f"[DEBUG] Searching for track on spotify: {name} by {artist}")
+            #print(f"[DEBUG] Searching for track on spotify: {name} by {artist}")
             items = result['tracks']['items']
             if items:
                 uri = items[0]['uri']
@@ -227,7 +229,6 @@ class SeasonRecs(BaseRecs):
         playlist_name = f"{random_genre} songs on a {descrip} {tod}"
         print(playlist_name)
 
-        print(playlist_name)
         for track in recommendations:
             print(" -", track)
 
@@ -245,20 +246,115 @@ class SeasonRecs(BaseRecs):
         pass
 
 class WeatherRecs(BaseRecs):
-    def __init__(self, api_key1, credentials):
-        super().__init__(api_key1, credentials=None)
+    def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
+        super().__init__(api_key1, api_key2, credentials=None)
+        self.OPEN_WEATHER_KEY = api_key1
+        self.last_fm_api_key = api_key2
+
+        access_token = spotify_auth.get_access_token()
+        self.sp = spotipy.Spotify(auth=access_token)
 
     def rec_algorithm(self, param1, param2):
-        pass
+        print(f"[DEBUG] Starting weather recommendations")
+
+        country_code = "GB"
+        city = "Wolverhampton"
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city},{country_code}&appid={self.OPEN_WEATHER_KEY}"
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            print(f"[ERROR] Failed to get weather data. Status code {response.status_code}")
+            return [], [], ""
+
+        data = response.json()
+        weather = data['weather'][0]['main'].lower()
+        detailed_weather = data['weather'][0]['description'].lower()
+        print(f"[DEBUG] The weather is {weather}")
+
+        genre_mapping = {
+            "thunderstorm": ['ambient', 'industrial', 'gothic', 'metal', 'alternative-rock'],
+            "drizzle": ['lo-fi', 'jazz', 'indie-pop', 'soul', 'ambient'],
+            "rain": ['blues', 'acoustic', 'classical', 'chillwave'],
+            "snow": ['classical', 'folk', 'dream-pop', 'ambient'],
+            "atmosphere": ['ambient', 'chillwave', 'synthwave', 'post-rock'],
+            "clear": ['pop', 'reggae', 'house', 'funk', 'indie-rock'],
+            "clouds": ['indie', 'soft-rock', 'jazz', 'dream-pop']
+        }
+
+        if detailed_weather == "tornado":
+            genre = ['hard-rock', 'heavy-metal', 'industrial', 'dubstep', 'drum-and-bass']
+        else:
+            # defualt genre pop if not found
+            genre = genre_mapping.get(weather, ['pop'])
+
+        print(f"[DEBUG] Selected genres: {genre}")
+        genre_string = ", ".join(genre)
+
+        url = 'http://ws.audioscrobbler.com/2.0/'
+        params = {
+            'method': 'tag.gettoptracks',
+            'api_key': self.last_fm_api_key,
+            'format': 'json',
+        }
+
+        recommendations = []
+        uris = []
+        tracks_per_genre = 30 // len(genre)
+
+        for single_genre in genre:
+            print(f"[DEBUG] Fetching tracks for genre: {single_genre}")
+            params['tag'] = single_genre
+            params['limit'] = tracks_per_genre
+            response = requests.get(url, params=params)
+            if response.status_code != 200:
+                print(f"[ERROR] Failed to get tracks for genre {single_genre}")
+                continue
+
+            data = response.json()
+            tracks = data.get('tracks', {}).get('track', [])
+            if not tracks:
+                print(f"[ERROR] No tracks found for genre: {single_genre}")
+                continue
+
+            count = 0
+
+            for track in tracks:
+                if count >= tracks_per_genre:
+                    break
+
+                name = track.get('name')
+                artist = track.get('artist', {}).get('name')
+                if not name or not artist:
+                    print(f"[WARNING] Skipping track with missing name or artist.")
+                recommendations.append(f"{name} by {artist}")
+                query = f"{name} {artist}"
+                print(f"[DEBUG] Searching for track on spotify: {name} by {artist}")
+                result = self.sp.search(q=query, type='track', limit=5)
+                items = result.get('tracks', {}).get('items', [])
+                if items:
+                    uri = items[0]['uri']
+                    if uri not in uris:
+                        uris.append(uri)
+                        count += 1
+                        if count >= tracks_per_genre:
+                            break
+
+        playlist_name = f"Songs for {weather}"
+        recommendations = recommendations[:30]
+        random.shuffle(recommendations)
+        uris = uris[:30]
+        print(f"[DEBUG] Final recommendations: {recommendations}")
+        print(len(recommendations))
+        genre_string = ", ".join(genre)
+
+        return recommendations, uris, playlist_name
 
     def generate_recs(self):
-        pass
+        recs, uris, playlist_name = self.rec_algorithm(None, None)
+        return recs, uris, playlist_name
 
     def link_youtube_spotify(self):
         pass
 
     def upload_recs(self):
         pass
-
-
-

@@ -68,6 +68,11 @@ class SpotifyAPI(APIBase):
 
         return user_id, user_info, user_name
 
+    def get_track_info(self, uri):
+        track = self.spotify.track(uri)
+        name = track["name"]
+        artists = ", ".join([artist["name"] for artist in track["artists"]])
+        return name, artists
 
 class YoutubeAPI(APIBase):
     def __init__(self):
@@ -81,56 +86,86 @@ class YoutubeAPI(APIBase):
     def set_video(self, video_id):
         self.video_id = video_id
 
-    def add_to_playlist(self, playlist_name, playlist_id, *_):
-        if not self.video_id:
-            raise ValueError("No video selected, make sure to use set_video first.")
-
-        playlists = self.youtube.playlists().list(
-            part='snippet,contentDetails',
-            mine=True,
-            maxResults=50,
+    def search_video(self, query):
+        search = self.youtube.search().list(
+            q=query,
+            part="id,snippet",
+            type="video",
+            maxResults=1
         ).execute()
 
-        playlist_id = None
+        if not search["items"]:
+            return None
+        return search["items"][0]["id"]["videoId"]
+
+    def create_playlist(self, playlist_name):
+        playlists = self.youtube.playlists().list(
+            part="snippet",
+            mine=True,
+            maxResults=50
+        ).execute()
+
         for playlist in playlists.get("items", []):
             if playlist["snippet"]["title"].lower() == playlist_name.lower():
-                playlist_id = playlist["id"]
-                break
+                return playlist["id"]
 
-        if not playlist_id:
-            new_playlist = self.youtube.playlists().insert(
-                part='snippet,status',
-                body={
-                    "snippet": {
-                        "title": playlist_name,
-                        "description": "Created by Lucy's song recommendation system.",
-                    },
-                    "status": {
-                        "privacyStatus": "private",
-                    }
+        new_playlist = self.youtube.playlists().insert(
+            part="snippet,status",
+            body={
+                "snippet": {
+                    "title": playlist_name,
+                    "description": "Created by Lucy's song recommendation system.",
+                },
+                "status": {
+                    "privacyStatus": "private",
                 }
-            ).execute()
-            playlist_id = new_playlist["id"]
+            }
+        ).execute()
+        return new_playlist["id"]
 
-            request = self.youtube.playlistItems.insert(
+    def uris_to_ids(self, sp, uris):
+        video_ids = []
+        for uri in uris:
+            name, artists = sp.get_track_info(uri)
+            query = f"{name} {artists} official music video"
+
+            vid = self.search_video(query)
+            if vid:
+                video_ids.append(vid)
+
+        return video_ids
+
+    def add_to_playlist(self, playlist_name, video_ids):
+        if isinstance(video_ids, str):
+            video_ids = [video_ids]
+
+        playlist_id = self.create_playlist(playlist_name)
+
+        responses = []
+        for vid in video_ids:
+            request = self.youtube.playlistItems().insert(
                 part="snippet",
                 body={
                     "snippet": {
                         "playlistId": playlist_id,
                         "resourceId": {
                             "kind": "youtube#video",
-                            "videoId": self.video_id,
+                            "videoId": vid
                         }
                     }
                 }
             )
+            responses.append(request.execute())
 
-            response = request.execute()
-            return {
-                "playlist_id": playlist_id,
-                "playlist_url": f"https://www.youtube.com/playlist?list={playlist_id}",
-                "response": response,
-            }
+        print(f"[DEBUG] Playlist created: {playlist_name}")
+        print(f"[DEBUG] Youtube Playlist URL: https://www.youtube.com/playlist?list={playlist_id}")
+
+        return {
+            "playlistId": playlist_id,
+            "playlist_url": f"https://www.youtube.com/playlist?list={playlist_id}",
+            "added_videos": len(video_ids),
+            "responses": responses
+        }
 
     def get_user_info(self):
         channels_response = self.youtube.channels().list(
