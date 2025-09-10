@@ -6,6 +6,7 @@ import spotipy
 from APIs import SpotifyAPI, YoutubeAPI, LastFMAPI
 from Recommendations import GenreRecs, UserRecs, SeasonRecs, WeatherRecs
 from Auths import LastFMAuth, SpotifyAuth, WeatherAPI
+
 def main():
     def object_inst():
         # Auth objects
@@ -21,7 +22,7 @@ def main():
 
         # Recommendation Objects
         genre = GenreRecs(lastfm_key, None, spotify_auth)
-        user = UserRecs(None, None, spotify_auth)
+        user = UserRecs(lastfm_key, None, spotify_auth)
         season = SeasonRecs(lastfm_key, None, spotify_auth)
         weather = WeatherRecs(open_weather_key, lastfm_key, spotify_auth)
 
@@ -54,7 +55,7 @@ def main():
         if rec_choice.lower().startswith("g"):
             recs, uris, playlist_name  = genre.generate_recs()
         elif rec_choice.lower().startswith("u"):
-            user.generate_recs()
+            recs, uris, playlist_name = user.generate_recs()
         elif rec_choice.lower().startswith("a"):
             pass
         elif rec_choice.lower().startswith("s"):
@@ -66,8 +67,8 @@ def main():
 
         if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):
             APIChoice = input("Youtube or Spotify or Both?")
-            video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
             if APIChoice.lower().startswith("y"):
+                video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
                 youtubeAPI.add_to_playlist(playlist_name, video_ids)
             elif APIChoice.lower().startswith("s"):
                 if uris:
@@ -77,6 +78,7 @@ def main():
                     print("[ERROR] No songs to add. ")
             else:
                 spotifyAPI.add_to_playlist(playlist_name, uris)
+                video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
                 youtubeAPI.add_to_playlist(playlist_name, video_ids)
 
     genre, user, season, weather, spotifyapi, youtubeapi = object_inst()
