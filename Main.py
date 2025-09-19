@@ -4,8 +4,10 @@ import spotipy
 
 # Import files
 from APIs import SpotifyAPI, YoutubeAPI, LastFMAPI
+from Other import random_album_picker
 from Recommendations import GenreRecs, UserRecs, SeasonRecs, WeatherRecs
 from Auths import LastFMAuth, SpotifyAuth, WeatherAPI
+import Other
 
 def main():
     def object_inst():
@@ -30,7 +32,7 @@ def main():
         spotifyAPI = SpotifyAPI()
         youtubeAPI = YoutubeAPI()
 
-        return genre, user, season, weather, spotifyAPI, youtubeAPI
+        return genre, user, season, weather, spotifyAPI, youtubeAPI, sp
 
     def test_spotify_auth():
         try:
@@ -51,37 +53,42 @@ def main():
             print(f"[DEBUG] YouTube Auth Failed: {e}")
 
     def recommendations(genre, user, season, weather, spotifyAPI, youtubeAPI):
-        rec_choice = input("What type of recommendations? (Genre / User / Album / Seasonal / Weather)")
-        if rec_choice.lower().startswith("g"):
-            recs, uris, playlist_name  = genre.generate_recs()
-        elif rec_choice.lower().startswith("u"):
-            recs, uris, playlist_name = user.generate_recs()
-        elif rec_choice.lower().startswith("a"):
-            pass
-        elif rec_choice.lower().startswith("s"):
-            recs, uris, playlist_name = season.generate_recs()
-        elif rec_choice.lower().startswith("w"):
-            recs, uris, playlist_name = weather.generate_recs()
-        else:
-            print("[DEBUG] Invalid recommendation input. ")
-
-        if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):
-            APIChoice = input("Youtube or Spotify or Both?")
-            if APIChoice.lower().startswith("y"):
-                video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
-                youtubeAPI.add_to_playlist(playlist_name, video_ids)
-            elif APIChoice.lower().startswith("s"):
-                if uris:
-                    print("URIs to add:", uris)
-                    spotifyAPI.add_to_playlist(playlist_name, uris)
-                else:
-                    print("[ERROR] No songs to add. ")
+        while True:
+            rec_choice = input("What type of recommendations? (Genre / User / Album / Seasonal / Weather)")
+            if rec_choice.lower().startswith("g"):
+                recs, uris, playlist_name  = genre.generate_recs()
+            elif rec_choice.lower().startswith("u"):
+                recs, uris, playlist_name = user.generate_recs()
+            elif rec_choice.lower().startswith("a"):
+                random_album_picker(None, None, sp)
+            elif rec_choice.lower().startswith("s"):
+                recs, uris, playlist_name = season.generate_recs()
+            elif rec_choice.lower().startswith("w"):
+                recs, uris, playlist_name = weather.generate_recs()
             else:
-                spotifyAPI.add_to_playlist(playlist_name, uris)
-                video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
-                youtubeAPI.add_to_playlist(playlist_name, video_ids)
+                print("[DEBUG] Invalid recommendation input. ")
 
-    genre, user, season, weather, spotifyapi, youtubeapi = object_inst()
+            if not rec_choice.lower().startswith("a"):
+                if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):
+                    APIChoice = input("Youtube or Spotify or Both?")
+                    if APIChoice.lower().startswith("y"):
+                        video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
+                        youtubeAPI.add_to_playlist(playlist_name, video_ids)
+                    elif APIChoice.lower().startswith("s"):
+                        if uris:
+                            print("URIs to add:", uris)
+                            spotifyAPI.add_to_playlist(playlist_name, uris)
+                        else:
+                            print("[ERROR] No songs to add. ")
+                    else:
+                        spotifyAPI.add_to_playlist(playlist_name, uris)
+                        video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
+                        youtubeAPI.add_to_playlist(playlist_name, video_ids)
+
+            if input("Press Q to end recommendations. Or click enter to continue. ").lower().startswith("q"):
+                break
+
+    genre, user, season, weather, spotifyapi, youtubeapi, sp = object_inst()
     test_spotify_auth()
     test_youtube_auth()
     recommendations(genre, user, season, weather, spotifyapi, youtubeapi)

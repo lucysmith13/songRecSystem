@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-import random, requests
+import random, requests, socket
 import datetime as dt
 from datetime import datetime, time
 import spotipy
 from oauthlib.uri_validate import userinfo
 from collections import defaultdict
+import ipapi
 
 from Auths import SpotifyAuth, YouTubeAuth, LastFMAuth
 
@@ -40,7 +41,7 @@ class GenreRecs(BaseRecs):
         self.sp = spotipy.Spotify(auth=access_token)
 
     def rec_algorithm(self, genre, limit):
-        def get_similar_genre():
+        def get_similar_genre(genre):
             url = 'http://ws.audioscrobbler.com/2.0/'
             params = {
                 'method': 'tag.getSimilar',
@@ -51,8 +52,10 @@ class GenreRecs(BaseRecs):
             try:
                 response = requests.get(url, params=params)
                 response.raise_for_status()
+                if response.status_code != 200:
+                    print(f"[ERROR] Status Code: {response.status_code}")
                 data = response.json()
-                return [tag['name'] for tag in data.get('similarTags', {}).get('tags', [])]
+                return [tag['name'] for tag in data.get('similarTags', {}).get('tag', [])]
             except Exception as e:
                 print(f"[ERROR] Exception while getting last fm genres: {e}")
                 return []
@@ -75,7 +78,8 @@ class GenreRecs(BaseRecs):
                 print(f"[ERROR] Exception while getting top tracks for genre: {e}")
                 return []
 
-        similar_genres = get_similar_genre()
+        similar_genres = get_similar_genre(genre)
+        print(similar_genres)
         genres_to_use = [genre] + similar_genres[:2]
         print(f"[DEBUG] Genres: {genres_to_use}")
 
@@ -266,6 +270,7 @@ class SeasonRecs(BaseRecs):
         if 3 <= month <= 5:
             season = "spring"
         elif 6 <= month <= 8:
+
             season = "summer"
         elif 9 <= month <= 11:
             season = "autumn"
@@ -277,16 +282,16 @@ class SeasonRecs(BaseRecs):
             genre = ["christmas"]
         if season == "spring":
             descrip = "spring-like"
-            genre = ["indie-pop", "post-punk", "blues", "folk", "acoustic"]
+            genre = ["indie+pop", "post-punk", "blues", "folk", "acoustic"]
         if season == "summer":
             descrip = "summery"
             genre = ["reggae", "jungle", "hiphop", "pop-punk", "surf rock", "house"]
         if season == "autumn":
             descrip = "autumnal"
-            genre = ["grunge", "classic-rock", "emo", "indie-rock", "jazz", "neo-soul", "ambient", "lo-fi"]
+            genre = ["grunge", "classic+rock", "emo", "indie+rock", "jazz", "neo-soul", "ambient", "lo-fi"]
         if season == "winter":
             descrip = "winterly"
-            genre = ["classical", "trip-hop", "post-rock", "industrial", "death-metal"]
+            genre = ["classical", "trip-hop", "post-rock", "industrial", "death+metal"]
 
         random_genre = random.choice(genre)
 
@@ -354,13 +359,31 @@ class WeatherRecs(BaseRecs):
     def rec_algorithm(self, param1, param2):
         print(f"[DEBUG] Starting weather recommendations")
 
+        def get_location():
+            ip = requests.get("https://api.ipify.org").text
+            print(f"[DEBUG] Public IP: {ip}")
+
+            url = f"http://ip-api.com/json/{ip}?fields=city"
+            response = requests.get(url)
+
+            if response.status_code != 200:
+                print(f"[ERROR] Failed to get location. Status code: {response.status_code}")
+                return None
+
+            data = response.json()
+            city = data['city']
+            print(f"[DEBUG] City: {city}")
+            return city
+
+        city = get_location()
+
         country_code = "GB"
-        city = "Wolverhampton"
+
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city},{country_code}&appid={self.OPEN_WEATHER_KEY}"
         response = requests.get(url)
 
         if response.status_code != 200:
-            print(f"[ERROR] Failed to get weather data. Status code {response.status_code}")
+            print(f"[ERROR] Failed to get weather data. Status code :{response.status_code}")
             return [], [], ""
 
         data = response.json()
