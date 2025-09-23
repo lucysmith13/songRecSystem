@@ -4,7 +4,7 @@ import spotipy
 
 # Import files
 from APIs import SpotifyAPI, YoutubeAPI, LastFMAPI
-from Other import random_album_picker
+from NEA.songRecSystem.Other import random_album_picker
 from Recommendations import GenreRecs, UserRecs, SeasonRecs, WeatherRecs
 from Auths import LastFMAuth, SpotifyAuth, WeatherAPI
 import Other
