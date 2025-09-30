@@ -23,13 +23,6 @@ class BaseRecs(ABC):
     def generate_recs(self):
         pass
 
-    @abstractmethod
-    def link_youtube_spotify(self):
-        pass
-
-    @abstractmethod
-    def upload_recs(self):
-        pass
 
 class GenreRecs(BaseRecs):
     def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
@@ -125,11 +118,7 @@ class GenreRecs(BaseRecs):
         recs, uris, playlist_name = self.rec_algorithm(genre, limit)
         return recs, uris, playlist_name
 
-    def link_youtube_spotify(self):
-        pass
 
-    def upload_recs(self):
-        pass
 
 class UserRecs(BaseRecs):
     def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
@@ -239,11 +228,6 @@ class UserRecs(BaseRecs):
         recs, uris, playlist_name = self.rec_algorithm(time_range, top_artist_limit)
         return recs, uris, playlist_name
 
-    def link_youtube_spotify(self):
-        pass
-
-    def upload_recs(self):
-        pass
 
 class SeasonRecs(BaseRecs):
     def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
@@ -341,11 +325,6 @@ class SeasonRecs(BaseRecs):
         return recs, uris, playlist_name
         
 
-    def link_youtube_spotify(self):
-        pass
-
-    def upload_recs(self):
-        pass
 
 class WeatherRecs(BaseRecs):
     def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
@@ -473,8 +452,3 @@ class WeatherRecs(BaseRecs):
         recs, uris, playlist_name = self.rec_algorithm(None, None)
         return recs, uris, playlist_name
 
-    def link_youtube_spotify(self):
-        pass
-
-    def upload_recs(self):
-        pass
