@@ -54,19 +54,26 @@ def main():
 
     def recommendations(genre, user, season, weather, spotifyAPI, youtubeAPI):
         while True:
-            rec_choice = input("What type of recommendations? (Genre / User / Album / Seasonal / Weather)")
-            if rec_choice.lower().startswith("g"):
-                recs, uris, playlist_name  = genre.generate_recs()
-            elif rec_choice.lower().startswith("u"):
-                recs, uris, playlist_name = user.generate_recs()
-            elif rec_choice.lower().startswith("a"):
-                random_album_picker(None, None, sp)
-            elif rec_choice.lower().startswith("s"):
-                recs, uris, playlist_name = season.generate_recs()
-            elif rec_choice.lower().startswith("w"):
-                recs, uris, playlist_name = weather.generate_recs()
-            else:
-                print("[DEBUG] Invalid recommendation input. ")
+            while True:
+                rec_choice = input("What type of recommendations? (Genre / User / Album / Seasonal / Weather)")
+                if rec_choice.lower().startswith("g"):
+                    recs, uris, playlist_name  = genre.generate_recs()
+                    break
+                elif rec_choice.lower().startswith("u"):
+                    recs, uris, playlist_name = user.generate_recs()
+                    break
+                elif rec_choice.lower().startswith("a"):
+                    random_album_picker(None, None, sp)
+                    break
+                elif rec_choice.lower().startswith("s"):
+                    recs, uris, playlist_name = season.generate_recs()
+                    break
+                elif rec_choice.lower().startswith("w"):
+                    recs, uris, playlist_name = weather.generate_recs()
+                    break
+                else:
+                    print("[DEBUG] Invalid recommendation input. ")
+                    continue
 
             if not rec_choice.lower().startswith("a"):
                 if input("Would you like to add the recommendations to a playlist? ").lower().startswith("y"):

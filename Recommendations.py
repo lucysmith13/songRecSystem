@@ -111,12 +111,71 @@ class GenreRecs(BaseRecs):
         return self.recommended_tracks, uris, playlist_name
 
     def generate_recs(self):
-        genre = input("Enter a genre: ")
-        limit = int(input("Enter number of recommended tracks (less than 50): "))
-        print(f"[DEBUG] {limit} {genre} songs")
+        while True:
+            genre = input("Enter a genre: ")
 
-        recs, uris, playlist_name = self.rec_algorithm(genre, limit)
-        return recs, uris, playlist_name
+            def check_genre_exists(genre: str) -> bool:
+                url = "http://ws.audioscrobbler.com/2.0/"
+                params = {
+                    "method": "tag.getInfo",
+                    "tag": genre.lower(),
+                    "api_key": self.lastfm_api_key,
+                    "format": "json"
+                }
+                response = requests.get(url, params=params).json()
+
+                if "error" in response:
+                    print("[ERROR] Genre tag doesn't exist within last.fm")
+                    return False
+
+                tag_info = response.get("tag", {})
+                if not tag_info or not tag_info.get("name"):
+                    return False
+
+                if int(tag_info.get("reach", 0)) == 0:
+                    return False
+
+                return True
+
+            if check_genre_exists(genre) == True:
+                print("[DEBUG] Genre does exist")
+            else:
+                print("[DEBUG] Genre doesn't exist")
+
+                def search_similar(genre: str):
+                    url = "http://ws.audioscrobbler.com/2.0/"
+                    params = {
+                        "method": "tag.search",
+                        "tag": genre.lower(),
+                        "api_key": self.lastfm_api_key,
+                        "format": "json"
+                    }
+                    response = requests.get(url, params=params).json()
+
+                    if "results" in response and "tagmatches" in response["results"]:
+                        matches = response["results"]["tagmatches"]["tag"]
+                        return [match["name"] for match in matches]
+                    return []
+
+                similar = search_similar(genre)
+                if similar:
+                    print(f"[INFO] Did you mean one of these genres? {', '.join(similar[:5])}")
+                continue
+
+            try:
+                limit = int(input("Enter number of recommended tracks (less than 50): "))
+            except ValueError:
+                print("[ERROR] Please enter a valid INTEGER.")
+                continue
+
+            if limit > 50 or limit <= 0:
+                print("[ERROR] Limit must be between 1 and 50.")
+                continue
+
+            print(f"[DEBUG] {limit} {genre} songs")
+
+            recs, uris, playlist_name = self.rec_algorithm(genre, limit)
+            return recs, uris, playlist_name
 
 
 
