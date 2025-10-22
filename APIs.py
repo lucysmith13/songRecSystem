@@ -18,9 +18,21 @@ class APIBase(ABC):
     @abstractmethod
     def get_user_info(self):
         pass
-
+'''
+Name: SpotifyAPI
+Purpose: This is to create objects of the Spotify web API object
+and perform functions that work explicitly within Spotify.
+Inherits from the base class - APIBase. 
+'''
 class SpotifyAPI(APIBase):
     def __init__(self):
+        '''
+        Name: __init__
+        Parameters: None
+        Returns: None
+        Purpose: Initialises any variables needed for this class such as
+        any authentication variables needed for api calls.
+        '''
         super().__init__("Spotify")
         self.SpotifyAuth = SpotifyAuth()
 
@@ -35,11 +47,25 @@ class SpotifyAPI(APIBase):
             self.spotify = spotipy.Spotify(auth=self.access_token)
             self.user_id = self.spotify.current_user()['id']
 
-
+    '''
+    Name: refresh_spotify
+    Parameters: None
+    Returns: None
+    Purpose: Refreshes the access token using the .get_access_token method
+    in the SpotifyAuth class. 
+    '''
     def refresh_spotify(self):
         self.access_token = self.SpotifyAuth.get_access_token()
         self.spotify = spotipy.Spotify(auth=self.access_token)
 
+    '''
+    Name: add_to_playlist
+    Parameters: playlist_name, track_uris
+    Returns: playlist
+    Purpose: Adds tracks generating my the rec algorithms from another class,
+    to a playlist within the user's Spotify account using the Spotify Web API methods,
+    also provides a playlist name for the playlist.
+    '''
     def add_to_playlist(self, playlist_name, track_uris):
         if not track_uris:
             raise ValueError("track uris missing.")
@@ -60,6 +86,13 @@ class SpotifyAPI(APIBase):
         print(f"[DEBUG] Spotify playlist URL: {playlist_url}")
         return playlist
 
+    '''
+    Name: get_user_info
+    Parameters:
+    Returns: user_id, user_info, user_name
+    Purpose: Gets user profile information from their spotify account profile
+    that they have authenticated with.
+    '''
     def get_user_info(self):
         self.refresh_spotify()
         user_id = self.spotify.current_user()['id']
@@ -68,12 +101,21 @@ class SpotifyAPI(APIBase):
 
         return user_id, user_info, user_name
 
+    '''
+    Name: get_track_info
+    Parameters: uri
+    Returns: name, artists
+    Purpose: Gets name and artist of a single track uri using spotify.track.
+    '''
     def get_track_info(self, uri):
         track = self.spotify.track(uri)
         name = track["name"]
         artists = ", ".join([artist["name"] for artist in track["artists"]])
         return name, artists
-
+'''
+Name: YoutubeAPI
+Purpose:
+'''
 class YoutubeAPI(APIBase):
     def __init__(self):
         super().__init__("Youtube")

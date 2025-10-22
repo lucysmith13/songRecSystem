@@ -6,6 +6,7 @@ import spotipy
 from oauthlib.uri_validate import userinfo
 from collections import defaultdict
 import ipapi
+import random
 
 from Auths import SpotifyAuth, YouTubeAuth, LastFMAuth
 
@@ -106,7 +107,6 @@ class GenreRecs(BaseRecs):
 
         self.recommended_tracks = all_tracks
         print(f"[DEBUG] Recommended tracks: {self.recommended_tracks}")
-
 
         return self.recommended_tracks, uris, playlist_name
 
