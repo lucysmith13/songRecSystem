@@ -61,7 +61,7 @@ class GenreRecs(BaseRecs):
                 'tag': genre_tag,
                 'api_key': self.lastfm_api_key,
                 'format': 'json',
-                'limit': limit,
+                'limit': limit * 2,
             }
             try:
                 response = requests.get(url, params=params)
@@ -73,12 +73,16 @@ class GenreRecs(BaseRecs):
                 return []
 
         similar_genres = get_similar_genre(genre)
+        ignore = {'music', 'songs', 'favourites', 'all', 'unknown'}
+        similar_genres = [g for g in similar_genres if g not in ignore and len(g) > 2]
         print(similar_genres)
-        genres_to_use = [genre] + similar_genres[:2]
+        # weights main genre heavier than similar genres to avoid inaccurate genres
+        genres_to_use = [genre] * 2 + similar_genres[:2]
         print(f"[DEBUG] Genres: {genres_to_use}")
 
         all_tracks = []
         seen_titles = set()
+        artist_counts = {}
         uris = []
 
         for tag in genres_to_use:
@@ -87,24 +91,33 @@ class GenreRecs(BaseRecs):
                 track_name = t.get('name')
                 artist_name = t.get('artist', {}).get('name', '')
                 combined = f"{track_name} by {artist_name}"
-                if combined not in seen_titles:
-                    seen_titles.add(combined)
-                    all_tracks.append(combined)
+                if combined in seen_titles:
+                    continue
 
-                    try:
-                        query = f"track:{track_name} artist:{artist_name}"
-                        results = self.sp.search(q=query, type='track', limit=1)
-                        items = results.get('tracks', {}).get('items', [])
-                        if items:
-                            uris.append(items[0].get('uri'))
-                    except Exception as e:
-                        print(f"[ERROR] Couldn't fetch URI for {combined}: {e}")
+                if artist_counts.get(artist_name, 0) >= 2:
+                    continue
+
+                seen_titles.add(combined)
+                artist_counts[artist_name] = artist_counts.get(artist_name, 0) + 1
+                all_tracks.append(combined)
+
+                try:
+                    query = f"track:{track_name} artist:{artist_name}"
+                    results = self.sp.search(q=query, type='track', limit=1)
+                    items = results.get('tracks', {}).get('items', [])
+                    if items:
+                        uris.append(items[0].get('uri'))
+                except Exception as e:
+                    print(f"[ERROR] Couldn't fetch URI for {combined}: {e}")
 
                 if len(all_tracks) >= limit:
                     break
 
-        playlist_name = f"{genre} songs"
+            if len(all_tracks) >= limit:
+                break
 
+        playlist_name = f"{genre} songs"
+        random.shuffle(all_tracks)
         self.recommended_tracks = all_tracks
         print(f"[DEBUG] Recommended tracks: {self.recommended_tracks}")
 
