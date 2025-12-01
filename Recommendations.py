@@ -86,6 +86,9 @@ class GenreRecs(BaseRecs):
         uris = []
 
         for tag in genres_to_use:
+            if len(all_tracks) >= limit:
+                break
+
             tracks = get_top_tracks_for_genre(tag)
             for t in tracks:
                 track_name = t.get('name')
@@ -94,30 +97,53 @@ class GenreRecs(BaseRecs):
                 if combined in seen_titles:
                     continue
 
-                if artist_counts.get(artist_name, 0) >= 2:
+                max_per_artist = max(3, limit // 10)
+                if artist_counts.get(artist_name, 0) >= max_per_artist:
                     continue
-
-                seen_titles.add(combined)
-                artist_counts[artist_name] = artist_counts.get(artist_name, 0) + 1
-                all_tracks.append(combined)
 
                 try:
                     query = f"track:{track_name} artist:{artist_name}"
                     results = self.sp.search(q=query, type='track', limit=1)
                     items = results.get('tracks', {}).get('items', [])
                     if items:
-                        uris.append(items[0].get('uri'))
+                        uri = items[0].get('uri')
+                        uris.append(uri)
+                        all_tracks.append(combined)
+                        seen_titles.add(combined)
+                        artist_counts[artist_name] = artist_counts.get(artist_name, 0) + 1
                 except Exception as e:
                     print(f"[ERROR] Couldn't fetch URI for {combined}: {e}")
 
                 if len(all_tracks) >= limit:
                     break
 
-            if len(all_tracks) >= limit:
-                break
+            if len(all_tracks) < limit:
+                print(f"[WARNING] Only found {len(all_tracks)} valid URIS, topping up with non-spotify tracks")
+                for tag in genres_to_use:
+                    if len(all_tracks) >= limit:
+                        break
+                    tracks = get_top_tracks_for_genre(tag)
+                    for t in tracks:
+                        track_name = t.get('name')
+                        artist_name = t.get('artist', {}).get('name', '')
+                        combined = f"{track_name} by {artist_name}"
+                        if combined not in seen_titles:
+                            all_tracks.append(combined)
+                            uris.append(None)
+                            seen_titles.add(combined)
+                        if len(all_tracks) >= limit:
+                            break
 
         playlist_name = f"{genre} songs"
-        random.shuffle(all_tracks)
+
+        paired = list(zip(all_tracks, uris))
+        random.shuffle(paired)
+        if paired:
+            all_tracks, uris = zip(*paired)
+            all_tracks, uris = list(all_tracks), list(uris)
+        else:
+            all_tracks, uris = [], []
+
         self.recommended_tracks = all_tracks
         print(f"[DEBUG] Recommended tracks: {self.recommended_tracks}")
 

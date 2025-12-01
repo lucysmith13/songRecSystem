@@ -18,7 +18,21 @@ class AuthBase(ABC):
     def get_credentials(self):
         pass
 
+'''
+Name: SpotifyAuth
+Purpose: This creates the Spotify Authentication object 
+to perform the specific methods to authenticate the user within 
+the Spotify Web API.
+Inherits from AuthBase(ABC).
+'''
 class SpotifyAuth(AuthBase):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Initialises any variables needed for
+    Spotify Authentication such as the client credentials.
+    '''
     def __init__(self):
         super().__init__()
         self.client_id = os.getenv("spotify_client_id")
@@ -32,6 +46,13 @@ class SpotifyAuth(AuthBase):
         self.access_token = None
         self.refresh_token = None
 
+    '''
+    Name: authenticate
+    Parameters: code=None
+    Returns: self.access_token, self._refresh_access_token
+    Purpose: This is the main Spotify Authentication flow, which
+    calls the other methods within this class to fully complete it.
+    '''
     def authenticate(self, code=None):
         if os.path.exists(self.token_file):
             with open(self.token_file, "rb") as f:
@@ -85,6 +106,13 @@ class SpotifyAuth(AuthBase):
 
             return self.access_token
 
+    '''
+    Name: _refresh_access_token
+    Parameters: refresh_token  
+    Returns: self.access_token
+    Purpose: This refreshes the access token since 
+    they can expire after a while, and this refreshes it.
+    '''
     def _refresh_access_token(self, refresh_token):
         token_url = "https://accounts.spotify.com/api/token"
         data = {
@@ -111,6 +139,13 @@ class SpotifyAuth(AuthBase):
 
         return self.access_token
 
+    '''
+    Name: _is_token_expired
+    Parameters: token_info
+    Returns: time.time() > expires_at
+    Purpose: This method calcualtes if the current access
+    token is expired or when the access token will expire.
+    '''
     def _is_token_expired(self, token_info):
         import time
         expires_at = token_info.get("expires_at")
@@ -120,9 +155,23 @@ class SpotifyAuth(AuthBase):
             token_info["expires_at"] = expires_at
         return time.time() > expires_at
 
+    '''
+    Name: get_credentials
+    Parameters: None
+    Returns: self.client_id, self.client_secret, self.access_token, self.scope
+    Purpose: This is a getter method to get all credentials needed
+    for authentication. Inherits from AuthBase(ABC).
+    '''
     def get_credentials(self):
         return self.client_id, self.client_secret, self.access_token, self.scope
 
+    '''
+    Name: get_access_token
+    Parameters: None
+    Returns: self.authenticate, self._refresh_access_token, token_info["access_token"]
+    Purpose: This gets the access token from the pickled token file and checks if expired
+    or if the access token exists, this then begins the .authenticate() method. 
+    '''
     def get_access_token(self):
         if os.path.exists(self.token_file):
             with open(self.token_file, "rb") as f:
@@ -139,7 +188,21 @@ class SpotifyAuth(AuthBase):
 
         return self.authenticate()
 
+'''
+Name: YouTubeAuth
+Purpose: This creates the YouTube Authentication object 
+to perform the specific methods to authenticate the user within 
+the YouTube Data API.
+Inherits from AuthBase(ABC).
+'''
 class YouTubeAuth(AuthBase):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: initialises any variables needed for
+    YouTube Authentication such as the client credentials.
+    '''
     def __init__(self):
         super().__init__()
         self.scopes = ["https://www.googleapis.com/auth/youtube"]
@@ -147,6 +210,12 @@ class YouTubeAuth(AuthBase):
         self.client_secret_file = "client_secret.json"
         self.token_file = "youtube_token.pickle"
 
+    '''
+    Name: authenticate
+    Parameters: None
+    Returns: self.access_token   
+    Purpose: 
+    '''
     def authenticate(self):
         if os.path.exists(self.token_file):
             with open(self.token_file, "rb") as token:

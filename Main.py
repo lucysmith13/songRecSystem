@@ -1,4 +1,5 @@
 # Import Libraries
+from fontTools.misc.psOperators import PSOperators
 from spotipy import SpotifyOAuth
 import spotipy
 
@@ -53,7 +54,9 @@ def main():
             print(f"[DEBUG] YouTube Auth Failed: {e}")
 
     def recommendations(genre, user, season, weather, spotifyAPI, youtubeAPI):
-        while True:
+        end = False
+
+        while not end:
             while True:
                 rec_choice = input("What type of recommendations? (Genre / User / Album / Seasonal / Weather)")
                 if rec_choice.lower().startswith("g"):
@@ -92,8 +95,17 @@ def main():
                         video_ids = youtubeAPI.uris_to_ids(spotifyAPI, uris)
                         youtubeAPI.add_to_playlist(playlist_name, video_ids)
 
-            if input("Press Q to end recommendations. Or click enter to continue. ").lower().startswith("q"):
-                break
+            while True:
+                user_input = input("Press Q to end recommendations, or press Enter to continue: ").strip().lower()
+
+                if user_input == "q":
+                    end = True
+                    break
+
+                if user_input == "":
+                    break
+
+                print("Invalid input, please only press Q or enter!")
 
     genre, user, season, weather, spotifyapi, youtubeapi, sp = object_inst()
     test_spotify_auth()

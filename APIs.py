@@ -114,9 +114,18 @@ class SpotifyAPI(APIBase):
         return name, artists
 '''
 Name: YoutubeAPI
-Purpose:
+Purpose: This is a constructor to instantiate a YouTube API object with
+specific methods to work explicitly within the YouTube Data API.
+Inherits from the base class - APIBase
 '''
 class YoutubeAPI(APIBase):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Initialises any variables needed for this class such as
+    any authentication variables needed for api calls.
+    '''
     def __init__(self):
         super().__init__("Youtube")
         self.YoutubeAuth = YouTubeAuth()
@@ -125,9 +134,22 @@ class YoutubeAPI(APIBase):
         self.youtube = build('youtube', 'v3', credentials=credentials)
         self.video_id = None
 
+    '''
+    Name: set_video
+    Parameters: video_id
+    Returns: None
+    Purpose: Sets the video_id parameter to a variable video_id which
+    can be called for the YouTube API. 
+    '''
     def set_video(self, video_id):
         self.video_id = video_id
 
+    '''
+    Name: search_video
+    Parameters: query
+    Returns: search["items"][0]["id"]["videoId"]
+    Purpose: Searches for videos on YouTube API.
+    '''
     def search_video(self, query):
         search = self.youtube.search().list(
             q=query,
@@ -140,6 +162,13 @@ class YoutubeAPI(APIBase):
             return None
         return search["items"][0]["id"]["videoId"]
 
+    '''
+    Name: create_playlist
+    Parameters: playlist_name
+    Returns: new_playlist["id"]
+    Purpose: Creates a blank playlist with no songs currently 
+    on it within the user's Spotify account. 
+    '''
     def create_playlist(self, playlist_name):
         playlists = self.youtube.playlists().list(
             part="snippet",
@@ -165,6 +194,13 @@ class YoutubeAPI(APIBase):
         ).execute()
         return new_playlist["id"]
 
+    '''
+    Name: uris_to_ids
+    Parameters: sp, uris
+    Returns: video_ids
+    Purpose: Method to convert the spotify URIs to 
+    the YouTube video ids by searching youtube for the id. 
+    '''
     def uris_to_ids(self, sp, uris):
         video_ids = []
         for uri in uris:
@@ -177,6 +213,19 @@ class YoutubeAPI(APIBase):
 
         return video_ids
 
+    ''' 
+    Name: add_to_playlist
+    Parameters: playlist_name, video_ids
+    Returns: {
+            "playlistId": playlist_id,
+            "playlist_url": f"https://www.youtube.com/playlist?list={playlist_id}",
+            "added_videos": len(video_ids),
+            "responses": responses
+        }
+    Purpose: Uses my previous method create_playlist
+    to create a blank playlist add then add the correct
+    video_ids to the newly generated playlist. 
+    '''
     def add_to_playlist(self, playlist_name, video_ids):
         if isinstance(video_ids, str):
             video_ids = [video_ids]
@@ -208,7 +257,12 @@ class YoutubeAPI(APIBase):
             "added_videos": len(video_ids),
             "responses": responses
         }
-
+    '''
+    Name: get_user_info
+    Parameters: None
+    Returns: user_info.get("title", "Unknown YouTube User"), user_info OR "Unknown YouTube", {}
+    Purpose: 
+    '''
     def get_user_info(self):
         channels_response = self.youtube.channels().list(
             part="snippet,contentDetails,statistics",
@@ -221,11 +275,31 @@ class YoutubeAPI(APIBase):
         else:
             return "Unknown YouTube", {}
 
+'''
+Name: LastFMAPI
+Purpose: This is a constructor to instantiate a Last.fm API object with
+specific methods to work explicitly within the Last.fm API.
+This does not inherit from the APIBase class unlike the other APIs.  
+'''
 class LastFMAPI():
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Initialises any variables needed for this class such as
+    any authentication variables needed for api calls.
+    '''
     def __init__(self):
         self.LastFMAuth = LastFMAuth()
         self.api_key = self.LastFMAuth.get_credentials()
 
+    '''
+    Name: find_similar_artists
+    Parameters: artist
+    Returns: sim_names
+    Purpose: Using the parameter artist, it searches last.fm
+    to find similar artists to the original artist. 
+    '''
     def find_similar_artists(self, artist):
         url = f"http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist={artist}&api_key={self.api_key}&format=json"
         response = requests.get(url)
