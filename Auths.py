@@ -143,7 +143,7 @@ class SpotifyAuth(AuthBase):
     Name: _is_token_expired
     Parameters: token_info
     Returns: time.time() > expires_at
-    Purpose: This method calcualtes if the current access
+    Purpose: This method calculates if the current access
     token is expired or when the access token will expire.
     '''
     def _is_token_expired(self, token_info):
@@ -214,7 +214,9 @@ class YouTubeAuth(AuthBase):
     Name: authenticate
     Parameters: None
     Returns: self.access_token   
-    Purpose: 
+    Purpose: This is where the main authentication flow
+    happens which calls the other methods in the YouTube class 
+    in order to authenticate the user. 
     '''
     def authenticate(self):
         if os.path.exists(self.token_file):
@@ -233,33 +235,97 @@ class YouTubeAuth(AuthBase):
         self.access_token = self.credentials.token
         return self.access_token
 
+    '''
+    Name: get_credentials
+    Parameter: None
+    Returns: self.credentials
+    Purpose: This returns the main YouTube 
+    client credentials. Inherited from the get_credentials method
+    within the AuthBase class.
+    '''
     def get_credentials(self):
         return self.credentials
 
+'''
+Name: LastFMAuth
+Purpose: This creates the LastFM Authentication object 
+to perform the specific methods to retrieve a valid
+token for last.FM.
+Inherits from AuthBase(ABC).
+'''
 class LastFMAuth(AuthBase):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Initialises the api key variable by
+    getting from the .env file ready to be used in
+    any methods within this class only.
+    '''
     def __init__(self):
         super().__init__()
         self.api_key = os.getenv("lastfm_api_key")
 
+    '''
+    Name: authenticate
+    Parameters: **kwargs
+    Returns: self.access_token
+    Purpose: This authenticates the last fm 
+    access token in order to access the API.
+    '''
     def authenticate(self, **kwargs):
         if not self.api_key:
             raise ValueError("LastFM API key is missing")
         self.access_token = self.api_key
         return self.access_token
 
+    '''
+    Name: get_credentials
+    Parameters: None
+    Returns: self.api_key
+    Purpose: This just returns the api key which this method is 
+    inherited from the AuthBase class method.
+    '''
     def get_credentials(self):
         return self.api_key
 
+'''
+Name: WeatherAPI
+Purpose: This creates the Weather API Authentication object 
+to perform the specific methods to authenticate the user within 
+the Open Weather API.
+Inherits from AuthBase(ABC).
+'''
 class WeatherAPI(AuthBase):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Initialises the api key from the .env file
+    ready to use within this weather class.
+    '''
     def __init__(self):
         super().__init__()
         self.api_key = os.getenv("open_weather_api_key")
 
+    '''
+    Name: authenticate
+    Parameters: **kwargs
+    Returns: self.access_token
+    Purpose: To authenticate the weather API
+    using the api key to get an access token. 
+    '''
     def authenticate(self, **kwargs):
         if not self.api_key:
             raise ValueError("Open Weather API key is missing")
         self.access_token = self.api_key
         return self.access_token
 
+    '''
+    Name: get_credentials
+    Parameters: None
+    Returns: self.api_key
+    Purpose: Gets the self.api_key. 
+    '''
     def get_credentials(self):
         return self.api_key

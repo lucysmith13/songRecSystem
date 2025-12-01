@@ -10,7 +10,19 @@ from Recommendations import GenreRecs, UserRecs, SeasonRecs, WeatherRecs
 from Auths import LastFMAuth, SpotifyAuth, WeatherAPI
 import Other
 
+'''
+Name: main
+Parameters: None
+Returns: None
+Purpose: This function calls other functions to start the program.
+'''
 def main():
+    '''
+    Name: object_inst
+    Parameters: None
+    Returns: genre, user, season, weather, spotifyAPI, youtubeAPI, sp
+    Purpose: Instantiates objects of all the classes needed.
+    '''
     def object_inst():
         # Auth objects
         lastfm = LastFMAuth()
@@ -35,6 +47,13 @@ def main():
 
         return genre, user, season, weather, spotifyAPI, youtubeAPI, sp
 
+    '''
+    Name: test_spotify_auth
+    Parameters: None
+    Returns: None
+    Purpose: Tests if the user is successfully authenticated
+    on Spotify before continuing.
+    '''
     def test_spotify_auth():
         try:
             print("[DEBUG] Testing Spotify authentication...")
@@ -44,6 +63,13 @@ def main():
         except Exception as e:
             print(f"[DEBUG] Spotify Auth Failed: {e}")
 
+    '''
+    Name: test_youtube_auth
+    Parameters: None
+    Returns: None
+    Purpose: Tests if the user is successfully authenticated
+    on YouTube before continuing.
+    '''
     def test_youtube_auth():
         try:
             print("[DEBUG] Testing YouTube authentication...")
@@ -53,6 +79,13 @@ def main():
         except Exception as e:
             print(f"[DEBUG] YouTube Auth Failed: {e}")
 
+    '''
+    Name: recommendations
+    Parameters: genre, user, season, weather, spotifyAPI, youtubeAPI
+    Returns: None
+    Purpose: This calls the recommendation algorithms from Recommendations.py
+    and it also displays the CLI input questions. 
+    '''
     def recommendations(genre, user, season, weather, spotifyAPI, youtubeAPI):
         end = False
 
