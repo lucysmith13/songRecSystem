@@ -24,8 +24,20 @@ class BaseRecs(ABC):
     def generate_recs(self):
         pass
 
-
+'''
+Name: GenreRecs
+Purpose: This creates the genre recs objects in order 
+to generate genre recommendations. 
+Inherits from BaseRecs class.
+'''
 class GenreRecs(BaseRecs):
+    '''
+    Name: __init__
+    Parameters: api_key1, api_key2, spotify_auth: SpotifyAuth
+    Returns: None
+    Purpose: Initialises any variables needed for any
+    methods within genre recs such as api keys.
+    '''
     def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
         super().__init__(api_key1, api_key2=None, credentials=None)
         self.lastfm_api_key = api_key1
@@ -34,7 +46,21 @@ class GenreRecs(BaseRecs):
         access_token = spotify_auth.get_access_token()
         self.sp = spotipy.Spotify(auth=access_token)
 
+    '''
+    Name: rec_algorithm
+    Parameters: genre, limit
+    Returns: self.recommended_tracks, uris, playlist_name
+    Purpose: This is where the genre recommended songs
+    are generated. 
+    '''
     def rec_algorithm(self, genre, limit):
+        '''
+        Name: get_similar_genres
+        Parameters: genre
+        Returns: [tag['name'] for tag in data.get('similarTags', {}).get('tag', [])] or []
+        Purpose: Taking the genre, it generates similar genres
+        using the last.fm API.
+        '''
         def get_similar_genre(genre):
             url = 'http://ws.audioscrobbler.com/2.0/'
             params = {
@@ -54,6 +80,13 @@ class GenreRecs(BaseRecs):
                 print(f"[ERROR] Exception while getting last fm genres: {e}")
                 return []
 
+        '''
+        Name: get_top_tracks_for_genre
+        Parameters: genre_tag
+        Returns: data.get('tracks', {}).get('track', []) or []
+        Purpose: For the genres, it generates the top songs for wch 
+        of these genres using Last.FM API.
+        '''
         def get_top_tracks_for_genre(genre_tag):
             url = 'http://ws.audioscrobbler.com/2.0/'
             params = {
@@ -149,6 +182,14 @@ class GenreRecs(BaseRecs):
 
         return self.recommended_tracks, uris, playlist_name
 
+    '''
+    Name: generate_recs
+    Parameters: 
+    Returns: recs, uris, playlist_name
+    Purpose: This uses the rec_algorithm to generate 
+    the genre recs using user input such as genre and limit
+    and validating these inputs too.
+    '''
     def generate_recs(self):
         while True:
             genre = input("Enter a genre: ")
@@ -217,8 +258,20 @@ class GenreRecs(BaseRecs):
             return recs, uris, playlist_name
 
 
-
+'''
+Name: UserRecs
+Purpose: This creates the user recs objects in order 
+to generate user recommendations. 
+Inherits from BaseRecs class.
+'''
 class UserRecs(BaseRecs):
+    '''
+    Name: __init__
+    Parameters: api_key1, api_key2, spotify_auth: SpotifyAuth
+    Returns: None
+    Purpose: Initialises any variables needed to use in any of
+    the user recs methods such as the api_keys.
+    '''
     def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
         super().__init__(api_key1, api_key2=None, credentials=None)
         self.lastfm_api_key = api_key1
@@ -226,6 +279,13 @@ class UserRecs(BaseRecs):
         access_token = spotify_auth.get_access_token()
         self.sp = spotipy.Spotify(auth=access_token)
 
+    '''
+    Name: rec_algorithm
+    Parameters: param1, param2
+    Returns: final_results, final_results_uris, playlist_name
+    Purpose: This is the main algorithm where the user recs songs
+    are generated from using Last.FM and Spotify APIs.
+    '''
     def rec_algorithm(self, param1, param2):
         time_range = param1
 
@@ -320,14 +380,33 @@ class UserRecs(BaseRecs):
         print(f"[DEBUG] Final recommended tracks: {final_results}")
         return final_results, final_results_uris, playlist_name
 
+    '''
+    Name: generate_recs
+    Parameters: None
+    Returns: recs, uris playlist_name
+    Purpose: This uses the rec_algorithm to generate the songs
+    using the user input with input validation. 
+    '''
     def generate_recs(self):
         time_range = input("Time-Range: (short_term/medium_term/long_term) ")
         top_artist_limit = int(input("Top artist limit: "))
         recs, uris, playlist_name = self.rec_algorithm(time_range, top_artist_limit)
         return recs, uris, playlist_name
 
-
+'''
+Name: SeasonRecs
+Purpose: This creates the seasonal recs objects in order 
+to generate seasonal recommendations. 
+Inherits from BaseRecs class.
+'''
 class SeasonRecs(BaseRecs):
+    '''
+    Name: __init__
+    Parameters: api_key1, api_key2, spotify_auth: SpotifyAuth
+    Returns: None
+    Purpose: This initialises any variables needed for
+    the seasonal recs methods to work such as api keys.
+    '''
     def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
         super().__init__(api_key1, api_key2=None, credentials=None)
         self.lastfm_api_key = api_key1
@@ -335,6 +414,13 @@ class SeasonRecs(BaseRecs):
         access_token = spotify_auth.get_access_token()
         self.sp = spotipy.Spotify(auth=access_token)
 
+    '''
+    Name: rec_algorithm
+    Parameters: param1, param2
+    Returns: recommendations, uris, playlist_name
+    Purpoose: This is the main algorithm where the 
+    seasonal recommendations are generated.
+    '''
     def rec_algorithm(self, param1, param2):
         hour = dt.datetime.now().hour
         if 5 <= hour < 12:
@@ -418,13 +504,32 @@ class SeasonRecs(BaseRecs):
 
         return recommendations, uris, playlist_name
 
+    '''
+    Name: generate_recs
+    Parameters: None
+    Returns: recs, uris, playlist_name
+    Purpose: This uses the self.rec_algorithm to generate the 
+    recs. 
+    '''
     def generate_recs(self):
         recs, uris, playlist_name = self.rec_algorithm(None, None)
         return recs, uris, playlist_name
         
 
-
+'''
+Name: WeatherRecs
+Purpose: This creates the weather recs objects in order 
+to generate weather-based recommendations. 
+Inherits from BaseRecs class.
+'''
 class WeatherRecs(BaseRecs):
+    '''
+    Name: __init__
+    Parameters: api_key1, api_key2, spotify_auth: SpotifyAuth
+    Returns: None
+    Purpose: Initialises any variables needed for any weather recs
+    methods to work such as multiple api keys.
+    '''
     def __init__(self, api_key1, api_key2, spotify_auth: SpotifyAuth):
         super().__init__(api_key1, api_key2, credentials=None)
         self.OPEN_WEATHER_KEY = api_key1
@@ -433,9 +538,24 @@ class WeatherRecs(BaseRecs):
         access_token = spotify_auth.get_access_token()
         self.sp = spotipy.Spotify(auth=access_token)
 
+    '''
+    Name: rec_algorithm
+    Parameters: param1, param2
+    Returns: recommendations, uris, playlist_name
+    Purpose: This is the main algorithm where
+    all the songs will be generated based on the weather and
+    location suing multiple APIs. 
+    '''
     def rec_algorithm(self, param1, param2):
         print(f"[DEBUG] Starting weather recommendations")
 
+        '''
+        Name: get_location
+        Parameters: None
+        Returns: city or None
+        Purpose: This gets the current city of the 
+        user's computer using its IP address. 
+        '''
         def get_location():
             ip = requests.get("https://api.ipify.org").text
             print(f"[DEBUG] Public IP: {ip}")
@@ -546,6 +666,13 @@ class WeatherRecs(BaseRecs):
 
         return recommendations, uris, playlist_name
 
+    '''
+    Name: generate_recs
+    Parameters: None
+    Returns: recs, uris, playlist_name
+    Purpose: This uses self.rec_algorithm to generate
+    the recommendations. 
+    '''
     def generate_recs(self):
         recs, uris, playlist_name = self.rec_algorithm(None, None)
         return recs, uris, playlist_name
