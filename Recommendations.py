@@ -178,7 +178,12 @@ class GenreRecs(BaseRecs):
             all_tracks, uris = [], []
 
         self.recommended_tracks = all_tracks
-        print(f"[DEBUG] Recommended tracks: {self.recommended_tracks}")
+        #print(f"[DEBUG] Recommended tracks: {self.recommended_tracks}")
+
+        print(playlist_name)
+
+        for track in self.recommended_tracks:
+            print(" -", track)
 
         return self.recommended_tracks, uris, playlist_name
 
@@ -248,8 +253,8 @@ class GenreRecs(BaseRecs):
                 print("[ERROR] Please enter a valid INTEGER.")
                 continue
 
-            if limit > 50 or limit <= 0:
-                print("[ERROR] Limit must be between 1 and 50.")
+            if limit >= 50 or limit <= 0:
+                print("[ERROR] Limit must be between 1 and 49.")
                 continue
 
             print(f"[DEBUG] {limit} {genre} songs")
@@ -294,7 +299,7 @@ class UserRecs(BaseRecs):
         total_tracks_limit = 30
 
 
-        print("[DEBUG] Fetching user's top artists...")
+        #print("[DEBUG] Fetching user's top artists...")
         top_artists = self.sp.current_user_top_artists(limit=top_artist_limit, time_range=time_range)
         top_artist_names = [artist['name'] for artist in top_artists['items']]
         print(f"[DEBUG] Top artists: {top_artist_names}")
@@ -332,7 +337,7 @@ class UserRecs(BaseRecs):
             if len(final_similar_artists) >= top_artist_limit * 2:
                 break
 
-        print(f"[DEBUG] Final similar artists: {final_similar_artists}")
+       #print(f"[DEBUG] Final similar artists: {final_similar_artists}")
 
         if not final_similar_artists:
             print("No final similar artists found, using top artists instead.")
@@ -343,13 +348,13 @@ class UserRecs(BaseRecs):
         tracks_per_artist = max(total_tracks_limit // len(final_similar_artists), 1)
 
         for artist_name in final_similar_artists:
-            print(f"[DEBUG] Searching for artist on Spotify {artist_name}")
+            #print(f"[DEBUG] Searching for artist on Spotify {artist_name}")
             search_results = self.sp.search(q=artist_name, type='artist', limit=1)
-            print(f"[DEBUG] Spotify search result FOR {artist_name}.")
+            #print(f"[DEBUG] Spotify search result FOR {artist_name}.")
 
             if search_results['artists']['items']:
                 artist_id = search_results['artists']['items'][0]['id']
-                print(f"[DEBUG] Artist ID for {artist_name}: {artist_id}")
+                #print(f"[DEBUG] Artist ID for {artist_name}: {artist_id}")
 
                 top_tracks = self.sp.artist_top_tracks(artist_id)['tracks']
                 #print(f"[DEBUG] Top tracks for {artist_name}: {top_tracks}")
@@ -376,8 +381,13 @@ class UserRecs(BaseRecs):
         user_info = self.sp.me()
         username = user_info.get('display_name', 'Unknown User')
         playlist_name = f"{username}'s playlist"
-        
-        print(f"[DEBUG] Final recommended tracks: {final_results}")
+
+        print(playlist_name)
+
+        for track in final_results:
+            print(" -", track)
+
+        #print(f"[DEBUG] Final recommended tracks: {final_results}")
         return final_results, final_results_uris, playlist_name
 
     '''
@@ -497,6 +507,7 @@ class SeasonRecs(BaseRecs):
                 uris.append(uri)
 
         playlist_name = f"{random_genre} songs on a {descrip} {tod}"
+
         print(playlist_name)
 
         for track in recommendations:
@@ -585,6 +596,7 @@ class WeatherRecs(BaseRecs):
 
         data = response.json()
         weather = data['weather'][0]['main'].lower()
+        #weather = ""
         detailed_weather = data['weather'][0]['description'].lower()
         print(f"[DEBUG] The weather is {weather}")
 
@@ -601,7 +613,7 @@ class WeatherRecs(BaseRecs):
         if detailed_weather == "tornado":
             genre = ['hard-rock', 'heavy-metal', 'industrial', 'dubstep', 'drum-and-bass']
         else:
-            # defualt genre pop if not found
+            # default genre pop if not found
             genre = genre_mapping.get(weather, ['pop'])
 
         print(f"[DEBUG] Selected genres: {genre}")
@@ -619,7 +631,7 @@ class WeatherRecs(BaseRecs):
         tracks_per_genre = 30 // len(genre)
 
         for single_genre in genre:
-            print(f"[DEBUG] Fetching tracks for genre: {single_genre}")
+            #print(f"[DEBUG] Fetching tracks for genre: {single_genre}")
             params['tag'] = single_genre
             params['limit'] = tracks_per_genre
             response = requests.get(url, params=params)
@@ -645,7 +657,7 @@ class WeatherRecs(BaseRecs):
                     print(f"[WARNING] Skipping track with missing name or artist.")
                 recommendations.append(f"{name} by {artist}")
                 query = f"{name} {artist}"
-                print(f"[DEBUG] Searching for track on spotify: {name} by {artist}")
+                #print(f"[DEBUG] Searching for track on spotify: {name} by {artist}")
                 result = self.sp.search(q=query, type='track', limit=5)
                 items = result.get('tracks', {}).get('items', [])
                 if items:
@@ -660,9 +672,14 @@ class WeatherRecs(BaseRecs):
         recommendations = recommendations[:30]
         random.shuffle(recommendations)
         uris = uris[:30]
-        print(f"[DEBUG] Final recommendations: {recommendations}")
-        print(len(recommendations))
+        #print(f"[DEBUG] Final recommendations: {recommendations}")
+        #print(len(recommendations))
         genre_string = ", ".join(genre)
+
+        print(playlist_name)
+
+        for track in recommendations:
+            print(" -", track)
 
         return recommendations, uris, playlist_name
 
