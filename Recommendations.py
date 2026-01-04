@@ -443,7 +443,8 @@ class SeasonRecs(BaseRecs):
             tod = "night"
 
         month = dt.datetime.now().month
-        today = dt.date.today()
+        # today = dt.date.today()
+        today = 2025/12/25
 
         if 3 <= month <= 5:
             season = "spring"
@@ -455,7 +456,7 @@ class SeasonRecs(BaseRecs):
         else:
             season = "winter"
 
-        if today == dt.date(today.year, 12, 25):
+        if today == dt.date(2025, 12, 25):
             # its christmas!
             genre = ["christmas"]
         if season == "spring":
@@ -595,8 +596,8 @@ class WeatherRecs(BaseRecs):
             return [], [], ""
 
         data = response.json()
-        weather = data['weather'][0]['main'].lower()
-        #weather = ""
+        #weather = data['weather'][0]['main'].lower()
+        weather = "thunderstorm"
         detailed_weather = data['weather'][0]['description'].lower()
         print(f"[DEBUG] The weather is {weather}")
 

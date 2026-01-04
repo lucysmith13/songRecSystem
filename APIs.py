@@ -204,6 +204,9 @@ class YoutubeAPI(APIBase):
     def uris_to_ids(self, sp, uris):
         video_ids = []
         for uri in uris:
+            if not uri:
+                print("[WARNING] Skipping empty URI: ", uri)
+                continue
             name, artists = sp.get_track_info(uri)
             query = f"{name} {artists} official music video"
 

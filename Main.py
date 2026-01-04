@@ -59,9 +59,9 @@ def main():
             print("[DEBUG] Testing Spotify authentication...")
             spotify = SpotifyAPI()
             user_id, user_info, user_name = spotify.get_user_info()
-            # print("[DEBUG] USER ID:",user_id)
-            # print("[DEBUG] USER INFO:",user_info)
-            # print("[DEBUG] USERNAME:", user_name)
+            print("[DEBUG] USER ID:",user_id)
+            print("[DEBUG] USER INFO:",user_info)
+            print("[DEBUG] USERNAME:", user_name)
             print(f"[DEBUG] Spotify Auth Successful: {user_name}")
         except Exception as e:
             print(f"[DEBUG] Spotify Auth Failed: {e}")
