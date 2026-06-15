@@ -197,6 +197,7 @@ class YoutubeAPI(APIBase):
     '''
     Name: uris_to_ids
     Parameters: sp, uris
+    Parameters: sp, uris
     Returns: video_ids
     Purpose: Method to convert the spotify URIs to 
     the YouTube video ids by searching youtube for the id. 
@@ -263,8 +264,8 @@ class YoutubeAPI(APIBase):
     '''
     Name: get_user_info
     Parameters: None
-    Returns: user_info.get("title", "Unknown YouTube User"), user_info OR "Unknown YouTube", {}
-    Purpose: 
+    Returns: user_info.get("title", "Unknown YouTube User"), user_info OR "Unknown YouTube", {} 
+    Purpose: Gets user info from youtube.
     '''
     def get_user_info(self):
         channels_response = self.youtube.channels().list(

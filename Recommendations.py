@@ -398,7 +398,14 @@ class UserRecs(BaseRecs):
     using the user input with input validation. 
     '''
     def generate_recs(self):
-        time_range = input("Time-Range: (short_term/medium_term/long_term) ")
+        while True:
+            time_range = input("Time-Range: (short_term/medium_term/long_term) ")
+
+            if time_range not in ("short_term","medium_term","long_term"):
+                print("[ERROR] Ensure input is spelt correctly. (short_term/medium_term/long_term)")
+            else:
+                break
+
         top_artist_limit = int(input("Top artist limit: "))
         recs, uris, playlist_name = self.rec_algorithm(time_range, top_artist_limit)
         return recs, uris, playlist_name
@@ -428,7 +435,7 @@ class SeasonRecs(BaseRecs):
     Name: rec_algorithm
     Parameters: param1, param2
     Returns: recommendations, uris, playlist_name
-    Purpoose: This is the main algorithm where the 
+    Purpose: This is the main algorithm where the 
     seasonal recommendations are generated.
     '''
     def rec_algorithm(self, param1, param2):
@@ -443,34 +450,36 @@ class SeasonRecs(BaseRecs):
             tod = "night"
 
         month = dt.datetime.now().month
-        # today = dt.date.today()
-        today = 2025/12/25
+        today = dt.date.today()
+        #today = dt.date(2026,12,25)
 
         if 3 <= month <= 5:
             season = "spring"
         elif 6 <= month <= 8:
-
             season = "summer"
         elif 9 <= month <= 11:
             season = "autumn"
         else:
             season = "winter"
 
-        if today == dt.date(2025, 12, 25):
+        if today == dt.date(2026, 12, 25):
             # its christmas!
+            playlist_name = "MERRY CHRISTMAS!"
             genre = ["christmas"]
-        if season == "spring":
-            descrip = "spring-like"
-            genre = ["indie+pop", "post-punk", "blues", "folk", "acoustic"]
-        if season == "summer":
-            descrip = "summery"
-            genre = ["reggae", "jungle", "hiphop", "pop-punk", "surf rock", "house"]
-        if season == "autumn":
-            descrip = "autumnal"
-            genre = ["grunge", "classic+rock", "emo", "indie+rock", "jazz", "neo-soul", "ambient", "lo-fi"]
-        if season == "winter":
-            descrip = "winterly"
-            genre = ["classical", "trip-hop", "post-rock", "industrial", "death+metal"]
+
+        else:
+            if season == "spring":
+                descrip = "spring-like"
+                genre = ["indie+pop", "post-punk", "blues", "folk", "acoustic"]
+            elif season == "summer":
+                descrip = "summery"
+                genre = ["reggae", "jungle", "hiphop", "pop-punk", "surf rock", "house"]
+            elif season == "autumn":
+                descrip = "autumnal"
+                genre = ["grunge", "classic+rock", "emo", "indie+rock", "jazz", "neo-soul", "ambient", "lo-fi"]
+            elif season == "winter":
+                descrip = "winterly"
+                genre = ["classical", "trip-hop", "post-rock", "industrial", "death-metal"]
 
         random_genre = random.choice(genre)
 
@@ -507,7 +516,8 @@ class SeasonRecs(BaseRecs):
                 uri = items[0]['uri']
                 uris.append(uri)
 
-        playlist_name = f"{random_genre} songs on a {descrip} {tod}"
+        if genre != ["christmas"]:
+            playlist_name = f"{random_genre} songs on a {descrip} {tod}"
 
         print(playlist_name)
 
@@ -596,8 +606,8 @@ class WeatherRecs(BaseRecs):
             return [], [], ""
 
         data = response.json()
-        #weather = data['weather'][0]['main'].lower()
-        weather = "thunderstorm"
+        weather = data['weather'][0]['main'].lower()
+        #weather = "thunderstorm"
         detailed_weather = data['weather'][0]['description'].lower()
         print(f"[DEBUG] The weather is {weather}")
 
@@ -694,4 +704,3 @@ class WeatherRecs(BaseRecs):
     def generate_recs(self):
         recs, uris, playlist_name = self.rec_algorithm(None, None)
         return recs, uris, playlist_name
-
